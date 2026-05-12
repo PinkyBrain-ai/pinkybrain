@@ -1,0 +1,82 @@
+# PinkyBrain — Docker Compose deployment
+# Usage: docker compose up -d
+# Secrets: use .env file or environment variables (never commit secrets)
+
+services:
+  pinkybrain:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: pinkybrain/server:latest
+    container_name: pinkybrain
+    restart: always
+    ports:
+      - "8080:8080"   # Private API (restrict with firewall)
+      - "8090:8090"   # Public mesh (expose as needed)
+    volumes:
+      - pinkybrain_data:/data
+      - ./config.json:/data/config.json:ro
+    environment:
+      - P2P_SECRET=${P2P_SECRET:?P2P_SECRET must be set in .env}
+      - OLLAMA_HOST=ollama:11434
+      - NODE_NAME=${NODE_NAME:-pinkybrain-docker}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/api/ping"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: always
+    volumes:
+      - ollama_data:/root/.ollama
+    # Uncomment for GPU support:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    ports:
+      - "11434:11434"
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+volumes:
+  pinkybrain_data:
+    driver: local
+  ollama_data:
+    driver: local
+
+networks:
+  internal:
+    driver: bridge
+    internal: true

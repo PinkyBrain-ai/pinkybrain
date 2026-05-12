@@ -1,0 +1,43 @@
+*.pyc
+__pycache__/
+logs/*.log
+logs/*.jsonl
+logs/
+
+# Secrets (use P2P_SECRET env var instead)
+P2P_SECRET
+*.secret
+*.sha256
+.env
+
+# Config files contain IPs, secrets, and personal data
+# Use node-v5.example.json as template
+config/bug*.json
+config/pinky*.json
+config/node-*.json
+!config/node-v5.example.json
+
+# Persistent data (may contain user data)
+shared_memory/
+
+# Model catalog hash (regenerated automatically)
+config/model_catalog.json.sha256
+
+# OS/IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage

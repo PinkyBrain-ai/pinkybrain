@@ -1,0 +1,73 @@
+{
+  "node_name": "your-node-name",
+  "version": "5.2.0",
+  "host": "0.0.0.0",
+  "port": 8080,
+  "ollama_host": "127.0.0.1",
+  "ollama_port": 11434,
+  "local_models": [
+    "model1:latest"
+  ],
+  "providers": {
+    "ollama": {
+      "type": "ollama",
+      "host": "127.0.0.1",
+      "port": 11434,
+      "models": [
+        "model1:latest"
+      ],
+      "enabled": true
+    }
+  },
+  "heartbeat_interval": 30,
+  "auto_heal_interval": 120,
+  "memory_max_size": 1000,
+  "memory_default_ttl": 3600,
+  "tailscale_auto_discovery": true,
+  "stealth_mode": false,
+  "share_ai": true,
+  "rate_limit": 10.0,
+  "rate_burst": 20,
+  "circuit_breaker": {
+    "failure_threshold": 3,
+    "recovery_timeout": 60,
+    "half_open_max_calls": 1
+  },
+  "peers": [],
+  "seed_nodes": [],
+  "token_lifetime": 86400,
+  "token_rotation_interval": 3600,
+  "discovery_interval": 300,
+  "public_mesh": {
+    "enabled": false,
+    "tracker_url": "https://tracker.pinkybrain.ai",
+    "max_ram_share_mb": 256,
+    "max_cpu_percent": 10,
+    "gpu_share": false,
+    "models_share": [],
+    "priority": "local_first",
+    "bandwidth_limit_kbps": 5000,
+    "contribution_score": 0,
+    "stealth_mode": false
+  },
+  "conversation_store": {
+    "enabled": true,
+    "storage_dir": "~/.pinkybrain/conversations",
+    "encryption": false,
+    "max_conversation_size_mb": 100,
+    "default_privacy": "private",
+    "auto_save": true,
+    "search_enabled": true
+  },
+  "p2p_secret": "CHANGE_ME_use_env_var_P2P_SECRET",
+  "bandwidth_quota": {
+    "monthly_data_gb": 5.0,
+    "bandwidth_limit_kbps": 5000,
+    "quota_period": "monthly"
+  },
+  "credit_system": {
+    "base_allocation": 100,
+    "max_balance": 10000,
+    "carry_over_pct": 0.5
+  }
+}

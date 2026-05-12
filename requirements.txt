@@ -1,0 +1,16 @@
+# PinkyBrain v5.2.0 — Requirements
+# Cross-platform: Linux, macOS, Windows
+# All packages work on all platforms
+
+# Core (required — server won't start without these)
+aiohttp>=3.9.0        # HTTP server, client, WebSocket, P2P
+
+# Monitoring (optional — graceful fallback if absent)
+psutil>=5.9.0         # CPU/RAM monitoring, resource guard
+
+# Security (optional — graceful fallback)
+PyNaCl>=1.5.0         # Ed25519 signing for P2P authentication
+cryptography>=41.0.0   # Fernet encryption for conversation store
+
+# Config (optional — JSON is built-in, YAML is convenience)
+PyYAML>=6.0           # YAML config files

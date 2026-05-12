@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PinkyBrain — P2P Distributed AI Network</title>
+<meta name="description" content="Lightweight P2P distributed AI network. No central server. No accounts. Install, connect, query.">
+<meta name="theme-color" content="#0a0e27">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--bg2:#111527;--bg3:#1a1f36;
+  --green:#4ecdc4;--green2:#3ab8a8;--cyan:#5ce0d6;
+  --pink:#ff6b6b;--yellow:#ffe66d;
+  --text:#e0e4f0;--text2:#9ba3bf;--text3:#6b7394;
+  --border:#222845;--radius:12px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --mono:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+a{color:var(--green);text-decoration:none;transition:color .2s}
+a:hover{color:var(--cyan)}
+::selection{background:var(--green);color:var(--bg)}
+code,pre{font-family:var(--mono)}
+
+/* Nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,26,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between}
+nav .logo{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1.15rem;color:#fff}
+nav .logo img{width:32px;height:32px}
+nav .links{display:flex;gap:1.5rem;font-size:.85rem}
+nav .links a{color:var(--text2);transition:color .2s}
+nav .links a:hover{color:var(--green)}
+nav .gh{background:var(--green);color:var(--bg);padding:.35rem 1rem;border-radius:20px;font-weight:600;font-size:.8rem;transition:transform .2s,box-shadow .2s}
+nav .gh:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(78,205,196,.3);color:var(--bg)}
+.hamburger{display:none;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6rem 2rem 4rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:50%;left:50%;width:800px;height:800px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(78,205,196,.08) 0%,transparent 70%);pointer-events:none}
+.hero-logo{width:140px;height:140px;margin-bottom:1.5rem;filter:drop-shadow(0 0 40px rgba(78,205,196,.3));animation:float 6s ease-in-out infinite}
+.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:-.02em;margin-bottom:.5rem;background:linear-gradient(135deg,#fff 0%,var(--green) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .tagline{font-size:clamp(1.1rem,2.5vw,1.5rem);color:var(--text2);margin-bottom:.3rem;font-weight:400}
+.hero .tagline-fr{font-size:1rem;color:var(--text3);font-style:italic;margin-bottom:2rem}
+.hero .version{display:inline-block;background:var(--bg3);border:1px solid var(--border);color:var(--green);padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-family:var(--mono);margin-bottom:2rem}
+.hero .badges{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-bottom:2.5rem}
+.hero .badges span{background:var(--bg3);border:1px solid var(--border);padding:.25rem .7rem;border-radius:20px;font-size:.75rem;color:var(--text2)}
+.hero .cta{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.8rem;border-radius:var(--radius);font-weight:600;font-size:.95rem;transition:all .2s;cursor:pointer;border:none;font-family:var(--font)}
+.btn-primary{background:var(--green);color:var(--bg)}
+.btn-primary:hover{background:var(--cyan);color:var(--bg);transform:translateY(-2px);box-shadow:0 8px 30px rgba(78,205,196,.25)}
+.btn-secondary{background:transparent;color:var(--green);border:1px solid var(--green)}
+.btn-secondary:hover{background:rgba(78,205,196,.1);transform:translateY(-2px)}
+
+/* Stats bar */
+.stats{display:flex;justify-content:center;gap:3rem;padding:3rem 2rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg2)}
+.stat{text-align:center}
+.stat .num{font-size:1.8rem;font-weight:800;color:var(--green);font-family:var(--mono)}
+.stat .label{font-size:.8rem;color:var(--text3);margin-top:.2rem}
+
+/* Sections */
+section{padding:5rem 2rem;max-width:1100px;margin:0 auto}
+section h2{font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;margin-bottom:1rem;text-align:center}
+section h2 .accent{color:var(--green)}
+section .subtitle{text-align:center;color:var(--text2);max-width:600px;margin:0 auto 3rem;font-size:1.05rem}
+
+/* Features grid */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.feature{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;transition:all .3s;position:relative;overflow:hidden}
+.feature:hover{border-color:var(--green);transform:translateY(-3px);box-shadow:0 8px 30px rgba(78,205,196,.08)}
+.feature .icon{font-size:1.8rem;margin-bottom:.8rem;display:block}
+.feature h3{font-size:1.1rem;font-weight:700;margin-bottom:.5rem;color:#fff}
+.feature p{font-size:.9rem;color:var(--text2);line-height:1.6}
+.feature .tag{display:inline-block;background:rgba(78,205,196,.1);color:var(--green);padding:.15rem .5rem;border-radius:4px;font-size:.7rem;font-family:var(--mono);margin-top:.8rem}
+
+/* Why section */
+.why{background:var(--bg2);max-width:100%;padding:5rem 2rem}
+.why-inner{max-width:900px;margin:0 auto}
+.why h2{text-align:center;margin-bottom:2rem}
+.why p{color:var(--text2);line-height:1.8;margin-bottom:1.2rem;font-size:1.02rem}
+.why strong{color:#fff}
+.why .manifesto{border-left:3px solid var(--green);padding-left:1.5rem;margin:2rem 0;font-style:italic;color:var(--text)}
+
+/* Quick start */
+.steps{display:flex;flex-direction:column;gap:1.5rem;max-width:750px;margin:0 auto}
+.step{display:flex;gap:1.2rem;align-items:flex-start}
+.step-num{width:36px;height:36px;border-radius:50%;background:var(--green);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;flex-shrink:0;margin-top:.2rem}
+.step-content h3{font-size:1rem;font-weight:700;margin-bottom:.4rem;color:#fff}
+.step-content p{font-size:.9rem;color:var(--text2)}
+
+/* Code blocks */
+.code-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:1rem 0 0}
+.code-block .lang{padding:.4rem 1rem;font-size:.7rem;color:var(--text3);font-family:var(--mono);border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--bg2)}
+.code-block pre{padding:1rem 1.2rem;overflow-x:auto;font-size:.85rem;line-height:1.7;color:var(--text2)}
+.code-block .comment{color:var(--text3)}
+.code-block .string{color:var(--green)}
+.code-block .key{color:var(--yellow)}
+
+/* Architecture */
+.arch-container{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;overflow-x:auto}
+.arch-container pre{font-family:var(--mono);font-size:clamp(.7rem,1.5vw,.88rem);color:var(--text);line-height:1.5;text-align:left;white-space:pre}
+
+/* API table */
+.api-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.api-table th{text-align:left;padding:.8rem 1rem;background:var(--bg2);color:var(--green);border-bottom:2px solid var(--border);font-weight:600}
+.api-table td{padding:.7rem 1rem;border-bottom:1px solid var(--border);color:var(--text2)}
+.api-table td:first-child{font-family:var(--mono);color:var(--yellow);font-size:.8rem}
+.api-table .method{font-family:var(--mono);color:var(--green);font-weight:600;font-size:.75rem}
+.api-table .auth-yes{color:var(--pink);font-size:.75rem}
+.api-table .auth-no{color:var(--text3);font-size:.75rem}
+.api-wrapper{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+
+/* CLI */
+.cli-commands{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem}
+.cli-cmd{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:.8rem 1rem;font-family:var(--mono);font-size:.85rem}
+.cli-cmd .cmd{color:var(--green);font-weight:700}
+.cli-cmd .desc{color:var(--text3);font-size:.78rem;margin-top:.3rem;font-family:var(--font)}
+
+/* Footer */
+footer{background:var(--bg2);border-top:1px solid var(--border);padding:3rem 2rem;text-align:center}
+footer .footer-links{display:flex;gap:2rem;justify-content:center;margin-bottom:1.5rem;flex-wrap:wrap}
+footer .footer-links a{color:var(--text2);font-size:.9rem;transition:color .2s}
+footer .footer-links a:hover{color:var(--green)}
+footer .btc{font-family:var(--mono);font-size:.75rem;color:var(--text3);background:var(--bg);padding:.4rem .8rem;border-radius:6px;display:inline-block;margin-top:1rem;word-break:break-all}
+footer .copy{color:var(--text3);font-size:.8rem;margin-top:1.5rem}
+
+/* Animations */
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.animate{opacity:0;animation:fadeInUp .6s ease forwards}
+.animate:nth-child(1){animation-delay:.1s}
+.animate:nth-child(2){animation-delay:.2s}
+.animate:nth-child(3){animation-delay:.3s}
+.animate:nth-child(4){animation-delay:.4s}
+.animate:nth-child(5){animation-delay:.5s}
+.animate:nth-child(6){animation-delay:.6s}
+.animate:nth-child(7){animation-delay:.7s}
+.animate:nth-child(8){animation-delay:.8s}
+.animate:nth-child(9){animation-delay:.9s}
+.animate:nth-child(10){animation-delay:1s}
+
+/* Responsive */
+@media(max-width:768px){
+  nav .links{display:none}
+  .hamburger{display:block}
+  nav .links.open{display:flex;flex-direction:column;position:absolute;top:60px;left:0;right:0;background:rgba(10,14,26,.98);padding:1rem 2rem;border-bottom:1px solid var(--border)}
+  .stats{flex-direction:column;gap:1.5rem;padding:2rem}
+  .features-grid{grid-template-columns:1fr}
+  section{padding:3rem 1.2rem}
+  .cli-commands{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="logo">
+    <img src="../assets/logo.svg" alt="UB" width="32" height="32">
+    <span>PinkyBrain</span>
+  </div>
+  <div class="links" id="navLinks">
+    <a href="#features">Features</a>
+    <a href="#why">Why</a>
+    <a href="#quickstart">Quick Start</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#api">API</a>
+    <a href="#cli">CLI</a>
+    <a href="https://github.com/PinkyBrain-ai/pinkybrain" target="_blank" class="gh">GitHub ↗</a>
+  </div>
+  <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Menu">☰</button>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <img src="../assets/logo.svg" alt="PinkyBrain Logo" class="hero-logo">
+  <h1>PinkyBrain</h1>
+  <p class="tagline">P2P Distributed AI Network</p>
+  <p class="tagline-fr">Intelligence partagée — Shared Intelligence</p>
+  <span class="version">v5.2</span>
+  <div class="badges">
+    <span>🟢 MIT License</span>
+    <span>🐍 Python 3.12+</span>
+    <span>🔗 100% Decentralized</span>
+    <span>🪶 17MB RAM</span>
+  </div>
+  <div class="cta">
+    <a href="#quickstart" class="btn btn-primary">⚡ Get Started</a>
+    <a href="https://github.com/PinkyBrain-ai/pinkybrain" target="_blank" class="btn btn-secondary">📂 View on GitHub</a>
+  </div>
+</section>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat"><div class="num">0.16s</div><div class="label">Startup Time</div></div>
+  <div class="stat"><div class="num">17MB</div><div class="label">RAM Usage</div></div>
+  <div class="stat"><div class="num">4</div><div class="label">Dependencies</div></div>
+  <div class="stat"><div class="num">∞</div><div class="label">Nodes Possible</div></div>
+</div>
+
+<!-- Features -->
+<section id="features">
+  <h2>Packed with <span class="accent">Power</span></h2>
+  <p class="subtitle">Everything you need for a distributed AI network — nothing you don't.</p>
+  <div class="features-grid">
+    <div class="feature animate">
+      <span class="icon">🤖</span>
+      <h3>Multi-LLM Providers</h3>
+      <p>Ollama, OpenAI, Anthropic, and any OpenAI-compatible endpoint. Bring your own key, share models across the P2P network automatically.</p>
+      <span class="tag">BYOK</span>
+    </div>
+    <div class="feature animate">
+      <span class="icon">🌐</span>
+      <h3>P2P WebSocket</h3>
+      <p>Real-time bidirectional sync via WebSocket. Gossip protocol propagates changes across all nodes. No central server — ever.</p>
+      <span class="tag">Gossip Protocol</span>
+    </div>
+    <div class="feature animate">
+      <span class="icon">🧠</span>
+      <h3>Distributed Memory</h3>
+      <p>CRDT conflict-free replication, vector clocks for causal ordering, gossip propagation, and TTL support. Memory that never conflicts.</p>
+      <span class="tag">CRDT + Vector Clocks</span>
+    </div>
+    <div class="feature animate">
+      <span class="icon">🔐</span>
+      <h3>Decentralized Auth</h3>
+      <p>Ed25519 identity keys, HMAC shared secrets, Web of Trust (PGP-like transitive trust), stealth mode for hidden nodes.</p>
+      <span class="tag">No Accounts Needed</span>
+    </div>
+    <div class="feature animate">
+      <span class="icon">⚡</span>
+      <h3>Smart AI Routing</h3>
+      <p>Local first → cloud on demand → peer failover. Ensemble consensus queries multiple models and returns the best answer. Circuit breakers protect the network.</p>
+      <span class="tag">Auto-Failover</span>
+    </div>
+    <div class="feature animate">
+      <span class="icon">📊</span>
+      <h3>Sharing Quotas</h3>
+      <p>Score-based limits: share more compute, earn more access. 1–200 queries/minute depending on your contribution. Fair by design.</p>
+      <span class="tag">Merit-Based</span>
+    </div>
+    <div class="feature animate">
+      <span class="icon">🔍</span>
+      <h3>Auto-Discovery</h3>
+      <p>Static config, Tailscale auto-discovery, or dynamic API registration. Nodes find each other — zero manual work on Tailscale.</p>
+      <span class="tag">Zero Config</span>
+    </div>
+    <div class="feature animate">
+      <span class="icon">🖥️</span>
+      <h3>Interactive CLI</h3>
+      <p>The <code>pinkybrain</code> command with /status, /peers, /models, /quota, /ensemble, and more. Full control from your terminal.</p>
+      <span class="tag">Terminal-First</span>
+    </div>
+    <div class="feature animate">
+      <span class="icon">🪶</span>
+      <h3>Lightweight</h3>
+      <p>0.16s startup, 17MB RAM, 4 dependencies. Runs on a Raspberry Pi, a Core 2 Duo, or anything with Python 3.12+.</p>
+      <span class="tag">Minimal Footprint</span>
+    </div>
+    <div class="feature animate">
+      <span class="icon">🔌</span>
+      <h3>OpenClaw Plugin</h3>
+      <p>One command install: <code>openclaw skill install pinkybrain</code>. Integrates with your OpenClaw agent seamlessly.</p>
+      <span class="tag">1-Click Install</span>
+    </div>
+  </div>
+</section>
+
+<!-- Why this exists -->
+<section id="why" class="why">
+  <div class="why-inner">
+    <h2>Why This <span class="accent">Exists</span></h2>
+    <p>We're tired of <strong>AI as a service</strong>. Monthly subscriptions. API keys that expire. Rate limits you didn't ask for. Vendor lock-in. Data you don't control. Servers that go down and take your workflow with them.</p>
+    <p>PinkyBrain is the <strong>antidote</strong>. Your machines, your models, your memory. Connect them peer-to-peer. No middleman. No subscription. No "enterprise tier".</p>
+    <div class="manifesto">
+      "If you can run Python, you can run a node. If you have two machines, you have a network. If your neighbor joins, it gets stronger. That's it. That's the whole pitch."
+    </div>
+    <p>The network doesn't phone home. It doesn't meter your usage. It doesn't upsell you. It <strong>just works</strong> — locally, privately, and reliably.</p>
+    <p>Every node is equal. No master, no slave, no controller. Memory syncs via CRDT so there are <strong>never conflicts</strong>. Auth is decentralized — your keys, your trust. Add a node, and the whole network gains compute. Remove one, and the rest keeps running.</p>
+    <p><strong>This is AI infrastructure for people who build things, not for people who buy things.</strong></p>
+  </div>
+</section>
+
+<!-- Quick Start -->
+<section id="quickstart">
+  <h2>Quick <span class="accent">Start</span></h2>
+  <p class="subtitle">Running in under 2 minutes. Seriously.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>Clone the repo</h3>
+        <p>Grab the code and enter the directory.</p>
+        <div class="code-block">
+          <div class="lang">bash</div>
+          <pre><span class="comment"># Clone &amp; enter</span>
+git clone https://github.com/PinkyBrain-ai/pinkybrain.git
+<span class="key">cd</span> PinkyBrain</pre>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>Run with default config</h3>
+        <p>That's it. One command. Python 3.12+ required.</p>
+        <div class="code-block">
+          <div class="lang">bash</div>
+          <pre>python3 src/pinkybrain_v5.py
+
+<span class="comment"># Or with a custom config</span>
+python3 src/pinkybrain_v5.py --config config/bug.json</pre>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>Connect your nodes</h3>
+        <p>Set a shared P2P secret and add peers. They discover each other automatically.</p>
+        <div class="code-block">
+          <div class="lang">json</div>
+          <pre>{
+  <span class="key">"node_name"</span>: <span class="string">"mynode"</span>,
+  <span class="key">"port"</span>: <span class="string">8080</span>,
+  <span class="key">"p2p_secret"</span>: <span class="string">"your-shared-secret"</span>,
+  <span class="key">"peers"</span>: [
+    {<span class="key">"name"</span>: <span class="string">"other-node"</span>, <span class="key">"host"</span>: <span class="string">"192.168.1.100"</span>, <span class="key">"port"</span>: <span class="string">8080</span>}
+  ]
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>Query your network</h3>
+        <p>Memory sync, model sharing, and real-time communication — all automatic.</p>
+        <div class="code-block">
+          <div class="lang">bash</div>
+          <pre><span class="comment"># Ping a node</span>
+curl http://localhost:8080/api/ping
+
+<span class="comment"># Query AI with auth</span>
+TS=$(date +%s)
+SIG=$(echo -n <span class="string">"/api/query:$TS"</span> | openssl dgst -sha256 \
+  -hmac <span class="string">"your-secret"</span> | awk <span class="string">'{print $NF}'</span>)
+curl -X POST http://localhost:8080/api/query \
+  -H <span class="string">"X-PinkyBrain-Auth: $SIG"</span> \
+  -H <span class="string">"X-PinkyBrain-TS: $TS"</span> \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -d <span class="string">'{"prompt":"Hello!","model":"glm-5.1:cloud"}'</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section id="architecture">
+  <h2>Architecture</h2>
+  <p class="subtitle">Every node is identical. No master. No slave. Pure P2P.</p>
+  <div class="arch-container">
+<pre>┌─────────────────────────────────────────────┐
+│                  Node (Bug)                  │
+│  ┌─────────┐  ┌──────────┐  ┌────────────┐ │
+│  │ HTTP    │  │WebSocket │  │  CRDT      │ │
+│  │ REST API│  │  Server  │  │  Memory    │ │
+│  └────┬────┘  └────┬─────┘  └─────┬──────┘ │
+│       │            │              │         │
+│       └──────┬─────┘──────────────┘         │
+│              │                              │
+│       ┌──────┴──────┐                       │
+│       │   AI Router │◄──── Ollama (local)   │
+│       └──────┬──────┘                       │
+│              │                              │
+│       ┌──────┴──────┐                       │
+│       │  Peer Mgr   │◄──── Tailscale/Static │
+│       └─────────────┘                       │
+└──────────────┬──────────────────────────────┘
+               │  WS + HTTP (gossip)
+┌──────────────┴──────────────────────────────┐
+│               Node (Pinky)                  │
+│         (same architecture)                 │
+└────────────────────────────────────────────┘</pre>
+  </div>
+</section>
+
+<!-- API Reference -->
+<section id="api">
+  <h2>API <span class="accent">Reference</span></h2>
+  <p class="subtitle">REST + WebSocket. Simple, typed, authenticated.</p>
+  <div class="api-wrapper">
+    <table class="api-table">
+      <thead>
+        <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="method">GET</span></td><td>/api/ping</td><td><span class="auth-no">No</span></td><td>Health check</td></tr>
+        <tr><td><span class="method">GET</span></td><td>/api/status</td><td><span class="auth-no">No</span></td><td>Node status, peers, memory stats</td></tr>
+        <tr><td><span class="method">GET</span></td><td>/api/memory/{key}</td><td><span class="auth-no">No</span></td><td>Read a memory entry</td></tr>
+        <tr><td><span class="method">POST</span></td><td>/api/memory/set</td><td><span class="auth-yes">Yes</span></td><td>Write a memory entry</td></tr>
+        <tr><td><span class="method">POST</span></td><td>/api/memory/push</td><td><span class="auth-yes">Yes</span></td><td>Push memory entries (sync)</td></tr>
+        <tr><td><span class="method">POST</span></td><td>/api/query</td><td><span class="auth-yes">Yes</span></td><td>Query AI models</td></tr>
+        <tr><td><span class="method">POST</span></td><td>/api/brain/chain</td><td><span class="auth-yes">Yes</span></td><td>Chain multiple AI queries</td></tr>
+        <tr><td><span class="method">POST</span></td><td>/api/trust/sign</td><td><span class="auth-yes">Yes</span></td><td>Sign a peer's key (Web of Trust)</td></tr>
+        <tr><td><span class="method">GET</span></td><td>/api/trust/{key}</td><td><span class="auth-no">No</span></td><td>Check trust score</td></tr>
+        <tr><td><span class="method">GET</span></td><td>/</td><td><span class="auth-no">No</span></td><td>Web dashboard</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:2rem">
+    <h3 style="font-size:1.1rem;margin-bottom:1rem;color:var(--green)">WebSocket Messages</h3>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:1rem">Connect to <code style="color:var(--yellow)">ws://host:port/ws</code> and send typed JSON:</p>
+    <div class="code-block">
+      <div class="lang">json</div>
+      <pre>{<span class="key">"type"</span>: <span class="string">"auth"</span>,  <span class="key">"hmac"</span>: <span class="string">"&lt;signature&gt;"</span>,  <span class="key">"ts"</span>: <span class="string">"&lt;timestamp&gt;"</span>}
+{<span class="key">"type"</span>: <span class="string">"ping"</span>,  <span class="key">"timestamp"</span>: <span class="string">1234567890</span>}
+{<span class="key">"type"</span>: <span class="string">"query"</span>, <span class="key">"prompt"</span>: <span class="string">"What is AI?"</span>, <span class="key">"model"</span>: <span class="string">"glm-5.1:cloud"</span>}
+{<span class="key">"type"</span>: <span class="string">"memory_update"</span>, <span class="key">"key"</span>: <span class="string">"mykey"</span>, <span class="key">"entry"</span>: {<span class="key">"value"</span>: <span class="string">"mydata"</span>}}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- CLI -->
+<section id="cli">
+  <h2>Interactive <span class="accent">CLI</span></h2>
+  <p class="subtitle">Full control from your terminal. The <code>pinkybrain</code> command.</p>
+  <div class="cli-commands">
+    <div class="cli-cmd"><span class="cmd">/status</span><div class="desc">Node health, uptime, peers</div></div>
+    <div class="cli-cmd"><span class="cmd">/peers</span><div class="desc">Connected peers &amp; latency</div></div>
+    <div class="cli-cmd"><span class="cmd">/models</span><div class="desc">Available AI models</div></div>
+    <div class="cli-cmd"><span class="cmd">/quota</span><div class="desc">Your sharing score &amp; limits</div></div>
+    <div class="cli-cmd"><span class="cmd">/ensemble</span><div class="desc">Multi-model consensus</div></div>
+    <div class="cli-cmd"><span class="cmd">/memory</span><div class="desc">CRDT memory browser</div></div>
+    <div class="cli-cmd"><span class="cmd">/trust</span><div class="desc">Web of Trust status</div></div>
+    <div class="cli-cmd"><span class="cmd">/discover</span><div class="desc">Find new peers</div></div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-links">
+    <a href="https://github.com/PinkyBrain-ai/pinkybrain" target="_blank">📂 GitHub</a>
+    <a href="https://github.com/PinkyBrain-ai/pinkybrain/blob/main/LICENSE" target="_blank">📄 MIT License</a>
+    <a href="#features">✨ Features</a>
+    <a href="#quickstart">⚡ Quick Start</a>
+    <a href="#api">📡 API</a>
+  </div>
+  <div style="color:var(--text2);font-size:.85rem;margin-bottom:.5rem">Support the project — BTC donations welcome</div>
+  <div class="btc">bc1qhpm800k35jfpwsnkepp7u8q9uruyvd3nycrh6x</div>
+  <div class="copy">
+    Built by Bug 🐛 &amp; Denis Houet — No mining. No premium tier. No hidden costs. Just free, open, distributed AI.
+  </div>
+</footer>
+
+<!-- Scroll animations -->
+<script>
+const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('animate');observer.unobserve(e.target)}})},{threshold:.1});
+document.querySelectorAll('.feature').forEach(f=>observer.observe(f));
+</script>
+</body>
+</html>

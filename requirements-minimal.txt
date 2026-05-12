@@ -1,0 +1,6 @@
+# PinkyBrain v5.2.0 — Minimal Requirements
+# Only what's absolutely needed to run the core server
+# These work on Linux, macOS, and Windows
+
+aiohttp>=3.9.0        # HTTP server, client, WebSocket (hard required)
+psutil>=5.9.0         # CPU/RAM monitoring (optional but recommended)

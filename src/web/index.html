@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PinkyBrain Desktop</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <span class="logo">🧠 PinkyBrain</span>
+                <span class="version" id="nodeVersion">v5.2.0</span>
+            </div>
+            <div class="header-right">
+                <span class="status-dot" id="statusDot"></span>
+                <span class="status-text" id="statusText">Connexion...</span>
+                <span class="peer-count" id="peerCount">0 pairs</span>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="app-body">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">💬 Conversations</h3>
+                    <div class="conversations-list" id="conversationsList">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn btn-sm btn-secondary" id="newConvBtn" title="Nouvelle conversation">+ Nouvelle</button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">🤖 Modèles</h3>
+                    <div class="models-list" id="modelsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="sidebar-section sidebar-stats">
+                    <div class="stat-row">
+                        <span>CPU</span>
+                        <span id="sidebarCpu">--%</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>RAM</span>
+                        <span id="sidebarRam">--%</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Content Area -->
+            <main class="content" id="content">
+                <!-- Tab Navigation -->
+                <nav class="tab-nav">
+                    <button class="tab-btn active" data-tab="chat">💬 Chat</button>
+                    <button class="tab-btn" data-tab="share">📊 Partage</button>
+                    <button class="tab-btn" data-tab="network">🔒 Réseau</button>
+                    <button class="tab-btn" data-tab="config">⚙️ Config</button>
+                </nav>
+
+                <!-- Tab: Chat -->
+                <div class="tab-panel active" id="tab-chat">
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="chat-welcome">
+                                <div class="welcome-icon">🧠</div>
+                                <h2>PinkyBrain</h2>
+                                <p>Réseau P2P d'IA distribué. Posez une question ou commencez une conversation.</p>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <div class="chat-options">
+                                <select id="modelSelect" title="Modèle IA">
+                                    <option value="auto">🤖 Auto</option>
+                                </select>
+                                <select id="specialtySelect" title="Spécialité" data-i18n-title="chat.specialtyLabel">
+                                    <option value="" data-i18n="chat.specialtyAuto">🎯 Auto-détection</option>
+                                    <option value="code" data-i18n="chat.specialtyCode">💻 Code</option>
+                                    <option value="reasoning" data-i18n="chat.specialtyReasoning">🧠 Raisonnement</option>
+                                    <option value="creative" data-i18n="chat.specialtyCreative">✨ Créatif</option>
+                                    <option value="math" data-i18n="chat.specialtyMath">🔢 Maths</option>
+                                    <option value="conversation" data-i18n="chat.specialtyConversation">💬 Conversation</option>
+                                    <option value="general" data-i18n="chat.specialtyGeneral">📚 Général</option>
+                                    <option value="multilingual" data-i18n="chat.specialtyMultilingual">🌍 Multilingue</option>
+                                    <option value="tool_use" data-i18n="chat.specialtyToolUse">🔧 Outils</option>
+                                    <option value="instruction" data-i18n="chat.specialtyInstruction">📋 Instructions</option>
+                                </select>
+                                <select id="strategySelect" title="Stratégie de routage">
+                                    <option value="auto">⚡ Auto</option>
+                                    <option value="local">🏠 Local</option>
+                                    <option value="peer">🔗 Pair</option>
+                                    <option value="consensus">🗳️ Consensus</option>
+                                </select>
+                                <select id="privacySelect" title="Confidentialité">
+                                    <option value="private">🔒 Privé</option>
+                                    <option value="synced">🔄 Synchronisé</option>
+                                </select>
+                                <select id="multiModeSelect" title="Mode multi-modèles" data-i18n-title="chat.multiModeLabel">
+                                    <option value="single" data-i18n="chat.multiSingle">1️⃣ Simple</option>
+                                    <option value="vote" data-i18n="chat.multiVote">🗳️ Vote</option>
+                                    <option value="chain" data-i18n="chat.multiChain">🔗 Chaîne</option>
+                                    <option value="fuse" data-i18n="chat.multiFuse">🔀 Fusion</option>
+                                    <option value="compare" data-i18n="chat.multiCompare">⚖️ Comparer</option>
+                                    <option value="specialist" data-i18n="chat.multiSpecialist">🎯 Spécialiste</option>
+                                </select>
+                            </div>
+                            <div class="chat-input-row">
+                                <textarea id="chatInput" placeholder="Écris ton message..." rows="1"></textarea>
+                                <button class="btn btn-primary" id="sendBtn" title="Envoyer">▶</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Share -->
+                <div class="tab-panel" id="tab-share">
+                    <div class="share-container">
+                        <section class="share-section">
+                            <h3>📊 Ressources Partagées</h3>
+                            <div class="resource-sliders">
+                                <!-- CPU: 5-70%, chaque ressource est indépendante -->
+                                <div class="resource-row">
+                                    <label>
+                                        <span class="resource-label">💻 CPU</span>
+                                        <span class="resource-value" id="cpuValue">10%</span>
+                                    </label>
+                                    <input type="range" id="cpuSlider" min="5" max="70" value="10" step="5">
+                                    <span class="resource-detail">5-70% · Actuel: <span id="cpuUsed">--</span> · Max: <span id="cpuMax">10%</span></span>
+                                </div>
+                                <!-- RAM: 128MB-70% du total, chaque ressource est indépendante -->
+                                <div class="resource-row">
+                                    <label>
+                                        <span class="resource-label">🧠 RAM</span>
+                                        <span class="resource-value" id="ramValue">256 MB</span>
+                                    </label>
+                                    <input type="range" id="ramSlider" min="128" max="65536" value="256" step="128">
+                                    <span class="resource-detail">128MB-70% du total · Actuel: <span id="ramUsed">--</span> · Max: <span id="ramMax">256 MB</span></span>
+                                </div>
+                                <!-- Bande passante: 0=illimité, 1Mbps-500Mbps, chaque ressource est indépendante -->
+                                <div class="resource-row">
+                                    <label>
+                                        <span class="resource-label">📡 Bande passante</span>
+                                        <span class="resource-value" id="bwValue">5 Mbps</span>
+                                    </label>
+                                    <input type="range" id="bwSlider" min="0" max="500000" value="5000" step="1000">
+                                    <span class="resource-detail">0 = illimité · 1-500 Mbps · Actuel: <span id="bwMax">5 Mbps</span></span>
+                                </div>
+                                <!-- Données mensuelles: 0=illimité, 0.5-500GB, chaque ressource est indépendante -->
+                                <div class="resource-row">
+                                    <label>
+                                        <span class="resource-label">💾 Données/mois</span>
+                                        <span class="resource-value" id="dataValue">5 GB</span>
+                                    </label>
+                                    <input type="range" id="dataSlider" min="0" max="3072" value="5" step="1">
+                                    <span class="resource-detail">0 = illimité · 0.5-3072 GB (3 TB) · Reset: <span id="dataReset">--</span></span>
+                                </div>
+                                <!-- Période de reset: mensuel, hebdo, quotidien -->
+                                <div class="resource-row">
+                                    <label>
+                                        <span class="resource-label">📅 Reset quota</span>
+                                        <select id="periodSelect" style="background:var(--bg-primary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;">
+                                            <option value="monthly">Mensuel (1er du mois)</option>
+                                            <option value="weekly">Hebdomadaire</option>
+                                            <option value="daily">Quotidien</option>
+                                        </select>
+                                    </label>
+                                    <span class="resource-detail">Quand le quota de données réinitialise</span>
+                                </div>
+                                <!-- GPU: on/off, chaque ressource est indépendante -->
+                                <div class="resource-row toggle-row">
+                                    <label class="toggle-label">
+                                        <input type="checkbox" id="gpuToggle">
+                                        <span class="toggle-switch"></span>
+                                        <span>🖥️ Partager mon GPU</span>
+                                    </label>
+                                    <span class="toggle-hint">⚠️ Uniquement si vous n'utilisez pas le GPU</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="share-section">
+                            <h3>🤖 Modèles Partagés</h3>
+                            <div class="models-share-list" id="modelsShareList">
+                                <!-- Populated by JS -->
+                            </div>
+                        </section>
+
+                        <section class="share-section">
+                            <h3>🔐 Permissions des Modèles</h3>
+                            <p class="section-hint" data-i18n="network.modelPermsHint">Choisissez quels modèles partager ou utiliser sur chaque réseau.</p>
+                            <div class="model-perms-container" id="modelPermsContainer">
+                                <!-- Populated by JS -->
+                            </div>
+                        </section>
+
+                        <section class="share-section">
+                            <h3>🔒 Réseaux Privés</h3>
+                            <p class="section-hint" data-i18n="network.privateNetworksHint">Gérez vos réseaux privés. Chaque réseau a sa propre clé secrète.</p>
+                            <div class="private-networks-container" id="privateNetworksContainer">
+                                <!-- Populated by JS -->
+                            </div>
+                            <button class="btn btn-sm btn-secondary" id="addNetworkBtn" data-i18n="network.addNetwork">+ Ajouter un réseau</button>
+                        </section>
+
+                        <section class="share-section">
+                            <h3>📈 Statistiques</h3>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-label">Score de contribution</div>
+                                    <div class="stat-value" id="contributionScore">0 🌱</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Requêtes servies</div>
+                                    <div class="stat-value" id="queriesServed">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Quota public</div>
+                                    <div class="stat-value" id="publicQuota">1 req/min</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Uptime</div>
+                                    <div class="stat-value" id="uptime">--</div>
+                                </div>
+                            </div>
+                            <div class="share-paused" id="sharePaused" style="display:none;">
+                                ⚠️ Votre PC est actuellement utilisé — partage en pause
+                                <button class="btn btn-sm btn-primary" id="resumeShareBtn">Reprendre le partage</button>
+                            </div>
+                        </section>
+
+                        <div class="save-bar" id="networkSaveBar">
+                            <button class="btn btn-primary btn-lg" id="saveNetworkConfigBtn" data-i18n="network.saveConfig">💾 Sauvegarder</button>
+                            <span class="save-status" id="saveNetworkStatus"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Network -->
+                <div class="tab-panel" id="tab-network">
+                    <div class="network-container">
+                        <section class="network-section">
+                            <h3>🔒 Réseau Privé</h3>
+                            <div class="network-subtitle">p2p_secret · <span id="privatePeerCount">0</span> pairs connectés</div>
+                            <div class="peers-grid" id="privatePeersList">
+                                <!-- Populated by JS -->
+                            </div>
+                            <div class="network-actions">
+                                <button class="btn btn-sm btn-secondary" id="addPeerBtn">+ Ajouter un pair</button>
+                                <button class="btn btn-sm btn-secondary" id="genInviteBtn">🔑 Générer invitation</button>
+                            </div>
+                        </section>
+
+                        <section class="network-section">
+                            <h3>🌐 Réseau Public (Mesh)</h3>
+                            <div class="network-subtitle" id="meshSubtitle">Mesh public désactivé</div>
+                            <div class="mesh-nodes-list" id="meshNodesList">
+                                <!-- Populated by JS -->
+                            </div>
+                            <div class="network-actions">
+                                <button class="btn btn-sm btn-primary" id="joinMeshBtn">Rejoindre le mesh</button>
+                                <button class="btn btn-sm btn-danger" id="leaveMeshBtn" style="display:none;">Quitter le mesh</button>
+                                <button class="btn btn-sm btn-secondary" id="refreshMeshBtn">🔄 Rafraîchir</button>
+                            </div>
+                        </section>
+
+                        <section class="network-section">
+                            <h3>🛡️ Isolation</h3>
+                            <div class="isolation-checks" id="isolationChecks">
+                                <div class="check-item">✅ Réseau privé sur port <span id="privatePort">8081</span> (p2p_secret)</div>
+                                <div class="check-item">✅ Mesh public sur port <span id="meshPort">8090</span> (Ed25519)</div>
+                                <div class="check-item" id="checkNoPrivateData">✅ Aucune donnée privée visible publiquement</div>
+                                <div class="check-item" id="checkResourceGuard">✅ Resource Guard actif</div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Tab: Config -->
+                <div class="tab-panel" id="tab-config">
+                    <div class="config-container">
+                        <section class="config-section">
+                            <h3>⚙️ Général</h3>
+                            <div class="form-group">
+                                <label for="cfgNodeName">Nom du nœud</label>
+                                <input type="text" id="cfgNodeName" placeholder="MonNœud">
+                            </div>
+                            <div class="form-group">
+                                <label for="cfgLang" id="cfgLangLabel">Langue</label>
+                                <select id="cfgLang">
+                                    <!-- Populated by i18n -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="cfgTheme">Thème</label>
+                                <select id="cfgTheme">
+                                    <option value="dark" selected>🌙 Sombre</option>
+                                    <option value="light">☀️ Clair</option>
+                                </select>
+                            </div>
+                        </section>
+
+                        <section class="config-section">
+                            <h3>🔒 Réseau Privé</h3>
+                            <div class="form-group">
+                                <label for="cfgP2PSecret">P2P Secret</label>
+                                <div class="input-with-btn">
+                                    <input type="password" id="cfgP2PSecret" placeholder="••••••••••••" autocomplete="off">
+                                    <button class="btn btn-sm btn-secondary" id="toggleSecretBtn">👁️</button>
+                                </div>
+                            </div>
+                            <div class="form-info">Pairs connectés : <span id="cfgPeerCount">0</span></div>
+                        </section>
+
+                        <section class="config-section">
+                            <h3>🌐 Mesh Public</h3>
+                            <div class="form-group toggle-row">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="cfgMeshEnabled">
+                                    <span class="toggle-switch"></span>
+                                    <span>Activer le mesh public</span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="cfgTracker">Tracker</label>
+                                <input type="url" id="cfgTracker" placeholder="https://tracker.pinkybrain.ai">
+                            </div>
+                            <div class="form-group">
+                                <label for="cfgPriority">Priorité</label>
+                                <select id="cfgPriority">
+                                    <option value="local_first" selected>Locale d'abord</option>
+                                    <option value="mesh_first">Mesh d'abord</option>
+                                    <option value="balanced">Équilibré</option>
+                                </select>
+                            </div>
+                            <div class="form-group toggle-row">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="cfgStealth">
+                                    <span class="toggle-switch"></span>
+                                    <span>Mode furtif (invisible sur le tracker)</span>
+                                </label>
+                            </div>
+                        </section>
+
+                        <section class="config-section">
+                            <h3>💾 Stockage</h3>
+                            <div class="storage-info">
+                                <div>Modèles privés : <code id="cfgPrivateModels">~/.ollama/models/</code></div>
+                                <div>Modèles partagés : <code id="cfgSharedModels">~/.pinkybrain/shared_models/</code></div>
+                                <div>Conversations : <code id="cfgConversations">~/.pinkybrain/conversations/</code></div>
+                            </div>
+                        </section>
+
+                        <section class="config-section">
+                            <h3>🔧 Avancé</h3>
+                            <div class="form-group toggle-row">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="cfgAutoPause" checked>
+                                    <span class="toggle-switch"></span>
+                                    <span>Auto-pause le partage quand le PC est occupé</span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="cfgCpuThreshold">Seuil CPU</label>
+                                <select id="cfgCpuThreshold">
+                                    <option value="60">60%</option>
+                                    <option value="70" selected>70%</option>
+                                    <option value="80">80%</option>
+                                    <option value="90">90%</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="cfgRamThreshold">Seuil RAM</label>
+                                <select id="cfgRamThreshold">
+                                    <option value="75">75%</option>
+                                    <option value="85" selected>85%</option>
+                                    <option value="90">90%</option>
+                                    <option value="95">95%</option>
+                                </select>
+                            </div>
+                            <div class="form-group toggle-row">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="cfgEncryptConversations">
+                                    <span class="toggle-switch"></span>
+                                    <span>Chiffrer les conversations localement</span>
+                                </label>
+                            </div>
+                            <div class="form-group toggle-row">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="cfgDevMode">
+                                    <span class="toggle-switch"></span>
+                                    <span>Mode développeur</span>
+                                </label>
+                            </div>
+                        </section>
+
+                        <div class="config-actions">
+                            <button class="btn btn-primary" id="saveConfigBtn">💾 Sauvegarder</button>
+                            <button class="btn btn-secondary" id="resetConfigBtn">↩️ Réinitialiser</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile sidebar toggle -->
+    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+
+    <!-- Toast notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Modal overlay -->
+    <div class="modal-overlay" id="modalOverlay" style="display:none;">
+        <div class="modal" id="modalContent"></div>
+    </div>
+
+    <script src="i18n/i18n.js"></script>
+    <script src="api.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

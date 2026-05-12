@@ -1,0 +1,762 @@
+[
+  {
+    "name": "glm-5.1:cloud",
+    "display_name": "GLM 5.1 Cloud",
+    "description": "Modèle géant 756B en cloud — notre modèle principal, excellent en français",
+    "long_description": "GLM 5.1 est un modèle de 756 milliards de paramètres développé par Zhipu AI. Il tourne en cloud (FP8) avec un contexte massif de 202K tokens. C'est notre modèle principal sur Pinky — excellent en français, raisonnement et suivi d'instructions. Architecture glm5.1 avec capacité thinking.",
+    "source": "local",
+    "status": "ready",
+    "categories": [
+      "general",
+      "conversation",
+      "raisonnement",
+      "multilingual",
+      "outils"
+    ],
+    "tags": [
+      "français",
+      "multilingue",
+      "long-context",
+      "raisonnement",
+      "thinking",
+      "cloud",
+      "pinky"
+    ],
+    "quality_rating": 8,
+    "speed_rating": 7,
+    "context_window": 202752,
+    "size_category": "xl",
+    "params_count": "756B",
+    "ram_required_gb": 0,
+    "vram_required_gb": 0,
+    "disk_size_gb": 0,
+    "strengths": [
+      "Excellent en français",
+      "Raisonnement solide",
+      "Multilingue",
+      "Suivi d'instructions",
+      "Long contexte 202K",
+      "Mode thinking",
+      "Appels d'outils"
+    ],
+    "limitations": [
+      "Cloud-only (pas local)",
+      "Moins bon en code complexe",
+      "Latence réseau"
+    ],
+    "best_for": [
+      "Conversation en français",
+      "Raisonnement général",
+      "Questions-réponses",
+      "Traduction",
+      "Instructions longues"
+    ],
+    "not_for": [
+      "Code complexe",
+      "Tâches hors-ligne"
+    ],
+    "languages": [
+      "fr",
+      "en",
+      "zh",
+      "de",
+      "es",
+      "ja",
+      "ko",
+      "ar",
+      "pt"
+    ],
+    "primary_language": "fr",
+    "provider": "ollama",
+    "architecture": "glm5.1",
+    "license": "Apache 2.0",
+    "quantization": "FP8",
+    "shared": false,
+    "price_per_million_input": 0.0,
+    "price_per_million_output": 0.0,
+    "notes": "Modèle principal de Pinky — tourne en cloud via Ollama"
+  },
+  {
+    "name": "qwen3:0.6b",
+    "display_name": "Qwen3 0.6B",
+    "description": "Mini-modèle ultraléger — bon pour les tâches rapides sur petit hardware",
+    "long_description": "Qwen3 0.6B est le plus petit modèle de la famille Qwen3. Avec seulement 751M de paramètres en Q4_K_M, il peut tourner sur n'importe quelle machine. Contexte de 40K tokens, supporte les appels d'outils. Idéal pour les tâches rapides où la qualité n'est pas critique.",
+    "source": "local",
+    "status": "ready",
+    "categories": [
+      "general",
+      "outils",
+      "instruction"
+    ],
+    "tags": [
+      "ultra-léger",
+      "rapide",
+      "local",
+      "pinky",
+      "bug",
+      "outils"
+    ],
+    "quality_rating": 3,
+    "speed_rating": 10,
+    "context_window": 40960,
+    "size_category": "tiny",
+    "params_count": "0.6B",
+    "ram_required_gb": 1,
+    "vram_required_gb": 0,
+    "disk_size_gb": 0.5,
+    "strengths": [
+      "Ultra-rapide",
+      "Fonctionne sur tout hardware",
+      "Appels d'outils",
+      "Contexte 40K"
+    ],
+    "limitations": [
+      "Qualité limitée",
+      "Pas bon en raisonnement",
+      "Hallucinations fréquentes",
+      "Anglais dominant"
+    ],
+    "best_for": [
+      "Tâches ultra-rapides",
+      "Routing/classification",
+      "Tests et prototypes",
+      "Embedding léger"
+    ],
+    "not_for": [
+      "Raisonnement",
+      "Code complexe",
+      "Conversation nuancée",
+      "Longs textes"
+    ],
+    "languages": [
+      "en",
+      "zh"
+    ],
+    "primary_language": "en",
+    "provider": "ollama",
+    "architecture": "qwen3",
+    "license": "Apache 2.0",
+    "quantization": "Q4_K_M",
+    "shared": true,
+    "price_per_million_input": 0.0,
+    "price_per_million_output": 0.0,
+    "notes": "Installé sur Pinky et Bug — le modèle fallback universel"
+  },
+  {
+    "name": "mistral:latest",
+    "display_name": "Mistral 7B",
+    "description": "Le classique de Mistral AI — bon en français et code, rapide",
+    "long_description": "Mistral 7B est le modèle fondateur de Mistral AI. En Q4_K_M, il occupe 4.4 GB et tourne sur n'importe quelle machine avec 8GB+ de RAM. Bon en français et en code, avec un contexte de 32K tokens. Architecture llama avec support des outils.",
+    "source": "local",
+    "status": "ready",
+    "categories": [
+      "general",
+      "conversation",
+      "code",
+      "multilingual"
+    ],
+    "tags": [
+      "français",
+      "code",
+      "rapide",
+      "local",
+      "bug",
+      "outils"
+    ],
+    "quality_rating": 6,
+    "speed_rating": 8,
+    "context_window": 32768,
+    "size_category": "small",
+    "params_count": "7.2B",
+    "ram_required_gb": 6,
+    "vram_required_gb": 0,
+    "disk_size_gb": 4.4,
+    "strengths": [
+      "Bon en français",
+      "Code correct",
+      "Rapide",
+      "Contexte 32K",
+      "Appels d'outils"
+    ],
+    "limitations": [
+      "Raisonnement moyen",
+      "Pas optimal en créatif",
+      "Qualité basique pour 2026"
+    ],
+    "best_for": [
+      "Chat en français",
+      "Code simple",
+      "Questions-réponses",
+      "Traduction",
+      "Routing rapide"
+    ],
+    "not_for": [
+      "Raisonnement avancé",
+      "Tâches très créatives",
+      "Longs documents"
+    ],
+    "languages": [
+      "en",
+      "fr",
+      "de",
+      "es",
+      "it"
+    ],
+    "primary_language": "fr",
+    "provider": "ollama",
+    "architecture": "llama",
+    "license": "Apache 2.0",
+    "quantization": "Q4_K_M",
+    "shared": true,
+    "price_per_million_input": 0.0,
+    "price_per_million_output": 0.0,
+    "notes": "Sur Bug — bon modèle français rapide"
+  },
+  {
+    "name": "gemma4:latest",
+    "display_name": "Gemma 4 8B",
+    "description": "Google Gemma 4 — vision, audio, thinking et outils dans un 8B",
+    "long_description": "Gemma 4 est le nouveau modèle de Google, version 8B en Q4_K_M. C'est un modèle multimodal : il gère la vision (images), l'audio, le mode thinking et les appels d'outils. Contexte massif de 131K tokens. Excellent rapport qualité/taille — un des meilleurs 8B disponibles.",
+    "source": "local",
+    "status": "ready",
+    "categories": [
+      "general",
+      "vision",
+      "audio",
+      "raisonnement",
+      "outils"
+    ],
+    "tags": [
+      "vision",
+      "audio",
+      "thinking",
+      "multimodal",
+      "Google",
+      "bug",
+      "outils"
+    ],
+    "quality_rating": 7,
+    "speed_rating": 7,
+    "context_window": 131072,
+    "size_category": "small",
+    "params_count": "8B",
+    "ram_required_gb": 10,
+    "vram_required_gb": 0,
+    "disk_size_gb": 9.6,
+    "strengths": [
+      "Vision (images)",
+      "Audio",
+      "Mode thinking",
+      "Appels d'outils",
+      "Long contexte 131K",
+      "Multimodal"
+    ],
+    "limitations": [
+      "8B reste limité en raisonnement profond",
+      "Anglais dominant",
+      "Pas spécialisé code"
+    ],
+    "best_for": [
+      "Analyse d'images",
+      "Transcription audio",
+      "Raisonnement avec thinking",
+      "Questions visuelles",
+      "Conversation"
+    ],
+    "not_for": [
+      "Code complexe",
+      "Maths avancées",
+      "Génération longue"
+    ],
+    "languages": [
+      "en",
+      "fr",
+      "de",
+      "es",
+      "zh",
+      "ja"
+    ],
+    "primary_language": "en",
+    "provider": "ollama",
+    "architecture": "gemma4",
+    "license": "Apache 2.0",
+    "quantization": "Q4_K_M",
+    "shared": true,
+    "price_per_million_input": 0.0,
+    "price_per_million_output": 0.0,
+    "notes": "Sur Bug — notre seul modèle multimodal (vision + audio)"
+  },
+  {
+    "name": "qwen3.5:latest",
+    "display_name": "Qwen3.5 9.7B",
+    "description": "Qwen3.5 — vision, thinking et outils avec contexte 262K",
+    "long_description": "Qwen3.5 est la dernière génération de la famille Qwen, version 9.7B en Q4_K_M. Il supporte la vision, le mode thinking et les appels d'outils. Son contexte de 262K tokens est le plus grand de notre collection. Bon en multilingue et raisonnement pour sa taille.",
+    "source": "local",
+    "status": "ready",
+    "categories": [
+      "general",
+      "vision",
+      "raisonnement",
+      "multilingual",
+      "outils"
+    ],
+    "tags": [
+      "vision",
+      "thinking",
+      "long-context",
+      "multilingue",
+      "bug",
+      "outils"
+    ],
+    "quality_rating": 7,
+    "speed_rating": 7,
+    "context_window": 262144,
+    "size_category": "small",
+    "params_count": "9.7B",
+    "ram_required_gb": 10,
+    "vram_required_gb": 0,
+    "disk_size_gb": 6.6,
+    "strengths": [
+      "Vision",
+      "Mode thinking",
+      "Contexte 262K",
+      "Appels d'outils",
+      "Multilingue",
+      "Bon rapport qualité/taille"
+    ],
+    "limitations": [
+      "Pas le meilleur en code",
+      "Qualité 9.7B reste limitée",
+      "Vision moins bonne que Gemma 4"
+    ],
+    "best_for": [
+      "Longs documents",
+      "Analyse d'images",
+      "Raisonnement avec thinking",
+      "Conversation multilingue"
+    ],
+    "not_for": [
+      "Code spécialisé",
+      "Tâches très créatives"
+    ],
+    "languages": [
+      "en",
+      "zh",
+      "fr",
+      "de",
+      "es",
+      "ja",
+      "ko"
+    ],
+    "primary_language": "en",
+    "provider": "ollama",
+    "architecture": "qwen35",
+    "license": "Apache 2.0",
+    "quantization": "Q4_K_M",
+    "shared": true,
+    "price_per_million_input": 0.0,
+    "price_per_million_output": 0.0,
+    "notes": "Sur Bug — contexte 262K le plus grand de la collection"
+  },
+  {
+    "name": "qwen3-coder:30b",
+    "display_name": "Qwen3 Coder 30B MoE",
+    "description": "Spécialiste code MoE 30B — notre meilleur modèle pour le développement",
+    "long_description": "Qwen3 Coder 30B est un modèle Mixture-of-Experts optimisé pour le code. Architecture qwen3moe avec 30.5B de paramètres en Q4_K_M. Contexte massif de 262K tokens. C'est notre meilleur modèle pour le développement logiciel. Les MoE activent seulement une partie des paramètres par token, donc il est plus rapide qu'un 30B dense.",
+    "source": "local",
+    "status": "ready",
+    "categories": [
+      "code",
+      "raisonnement",
+      "instruction",
+      "outils"
+    ],
+    "tags": [
+      "code",
+      "MoE",
+      "long-context",
+      "spécialiste",
+      "bug",
+      "outils"
+    ],
+    "quality_rating": 8,
+    "speed_rating": 6,
+    "context_window": 262144,
+    "size_category": "medium",
+    "params_count": "30.5B (MoE)",
+    "ram_required_gb": 20,
+    "vram_required_gb": 0,
+    "disk_size_gb": 18,
+    "strengths": [
+      "Code exceptionnel",
+      "Architecture MoE efficace",
+      "Contexte 262K",
+      "Appels d'outils",
+      "Multi-langages"
+    ],
+    "limitations": [
+      "Pas vision",
+      "Anglais dominant",
+      "18 GB sur disque",
+      "Moins créatif"
+    ],
+    "best_for": [
+      "Génération de code",
+      "Refactoring",
+      "Debug",
+      "Architecture logicielle",
+      "Scripts complexes"
+    ],
+    "not_for": [
+      "Vision",
+      "Création littéraire",
+      "Audio"
+    ],
+    "languages": [
+      "en",
+      "zh"
+    ],
+    "primary_language": "en",
+    "provider": "ollama",
+    "architecture": "qwen3moe",
+    "license": "Apache 2.0",
+    "quantization": "Q4_K_M",
+    "shared": true,
+    "price_per_million_input": 0.0,
+    "price_per_million_output": 0.0,
+    "notes": "Sur Bug — le meilleur modèle code de la collection"
+  },
+  {
+    "name": "deepseek-v3.1:671b-cloud",
+    "display_name": "DeepSeek V3.1 671B",
+    "description": "Le meilleur pour le code et le raisonnement — colosse MoE",
+    "long_description": "DeepSeek V3.1 est un modèle MoE (Mixture of Experts) de 671 milliards de paramètres. C'est l'un des meilleurs modèles open-source pour le code, les mathématiques et le raisonnement logique. Son architecture MoE active seulement ~37B paramètres par token, offrant un excellent rapport qualité/coût. Disponible en cloud via Ollama.",
+    "source": "cloud",
+    "status": "wishlist",
+    "categories": [
+      "code",
+      "raisonnement",
+      "math",
+      "outils"
+    ],
+    "tags": [
+      "code",
+      "mathématiques",
+      "MoE",
+      "open-source",
+      "raisonnement",
+      "cloud"
+    ],
+    "quality_rating": 10,
+    "speed_rating": 5,
+    "context_window": 131072,
+    "size_category": "xl",
+    "params_count": "671B",
+    "ram_required_gb": 0,
+    "vram_required_gb": 0,
+    "disk_size_gb": 0,
+    "strengths": [
+      "Code exceptionnel",
+      "Raisonnement avancé",
+      "Mathématiques",
+      "Appels d'outils",
+      "Architecture MoE efficace"
+    ],
+    "limitations": [
+      "Plus lent",
+      "Moins créatif",
+      "Anglais dominant",
+      "Cloud-only"
+    ],
+    "best_for": [
+      "Génération de code",
+      "Raisonnement logique",
+      "Mathématiques",
+      "Debug",
+      "Architecture logicielle"
+    ],
+    "not_for": [
+      "Création littéraire",
+      "Conversation légère",
+      "Tâches multilingues fines"
+    ],
+    "languages": [
+      "en",
+      "zh"
+    ],
+    "primary_language": "en",
+    "provider": "ollama",
+    "architecture": "MoE",
+    "license": "MIT",
+    "quantization": "FP8",
+    "shared": false,
+    "price_per_million_input": 0.0,
+    "price_per_million_output": 0.0,
+    "notes": "Cloud via Ollama — wishlist, à tester"
+  },
+  {
+    "name": "gpt-4o",
+    "display_name": "GPT-4o (OpenAI)",
+    "description": "Le modèle phare d'OpenAI — polyvalent, vision, outils",
+    "long_description": "GPT-4o est le modèle le plus polyvalent d'OpenAI. Excellent en raisonnement, code, créatif et vision. Supporte les appels d'outils et un contexte de 128K tokens. Modèle propriétaire avec coût par token.",
+    "source": "cloud",
+    "status": "wishlist",
+    "categories": [
+      "general",
+      "raisonnement",
+      "code",
+      "creatif",
+      "vision",
+      "outils"
+    ],
+    "tags": [
+      "propriétaire",
+      "vision",
+      "outils",
+      "OpenAI",
+      "polyvalent",
+      "cloud"
+    ],
+    "quality_rating": 9,
+    "speed_rating": 6,
+    "context_window": 128000,
+    "size_category": "xl",
+    "params_count": "???B",
+    "ram_required_gb": 0,
+    "vram_required_gb": 0,
+    "disk_size_gb": 0,
+    "strengths": [
+      "Très polyvalent",
+      "Vision",
+      "Appels d'outils",
+      "Raisonnement fort",
+      "Multilingue"
+    ],
+    "limitations": [
+      "Coûteux",
+      "Propriétaire",
+      "Latence réseau",
+      "Dépendance API"
+    ],
+    "best_for": [
+      "Tâches complexes",
+      "Vision",
+      "Analyse d'images",
+      "Raisonnement avancé"
+    ],
+    "not_for": [
+      "Usage intensif sans budget",
+      "Tâches hors-ligne"
+    ],
+    "languages": [
+      "en",
+      "fr",
+      "es",
+      "de",
+      "zh",
+      "ja",
+      "ko",
+      "pt",
+      "ar"
+    ],
+    "primary_language": "en",
+    "provider": "openai",
+    "architecture": "Propriétaire",
+    "license": "Propriétaire",
+    "shared": false,
+    "price_per_million_input": 2.5,
+    "price_per_million_output": 10.0,
+    "notes": "API OpenAI — wishlist, à configurer si budget"
+  },
+  {
+    "name": "claude-sonnet-4-20250514",
+    "display_name": "Claude Sonnet 4 (Anthropic)",
+    "description": "Raisonnement et code exceptionnels — le challenger d'OpenAI",
+    "long_description": "Claude Sonnet 4 excelle en raisonnement, code et création littéraire. Supporte un contexte massif de 200K tokens et les appels d'outils. Modèle propriétaire avec un excellent rapport qualité/prix dans la catégorie premium.",
+    "source": "cloud",
+    "status": "wishlist",
+    "categories": [
+      "raisonnement",
+      "code",
+      "creatif",
+      "conversation",
+      "outils"
+    ],
+    "tags": [
+      "propriétaire",
+      "raisonnement",
+      "code",
+      "Anthropic",
+      "long-context",
+      "cloud"
+    ],
+    "quality_rating": 9,
+    "speed_rating": 6,
+    "context_window": 200000,
+    "size_category": "xl",
+    "params_count": "???B",
+    "ram_required_gb": 0,
+    "vram_required_gb": 0,
+    "disk_size_gb": 0,
+    "strengths": [
+      "Raisonnement exceptionnel",
+      "Code excellent",
+      "Créatif",
+      "Long contexte 200K",
+      "Appels d'outils"
+    ],
+    "limitations": [
+      "Coûteux",
+      "Propriétaire",
+      "Pas de vision"
+    ],
+    "best_for": [
+      "Raisonnement avancé",
+      "Code complexe",
+      "Création littéraire",
+      "Longs documents"
+    ],
+    "not_for": [
+      "Usage gratuit",
+      "Vision"
+    ],
+    "languages": [
+      "en",
+      "fr",
+      "es",
+      "de",
+      "zh",
+      "ja"
+    ],
+    "primary_language": "en",
+    "provider": "anthropic",
+    "architecture": "Propriétaire",
+    "license": "Propriétaire",
+    "shared": false,
+    "price_per_million_input": 3.0,
+    "price_per_million_output": 15.0,
+    "notes": "API Anthropic — wishlist, à configurer si budget"
+  },
+  {
+    "name": "codellama:13b",
+    "display_name": "CodeLlama 13B",
+    "description": "Spécialiste code de Meta — completion et inférence",
+    "long_description": "CodeLlama 13B est spécialisé pour le code. Bon en completion de code, inférence de type et génération de tests. Limité aux tâches de code — pas bon en créatif ou conversation. Peut tourner localement sur Bug avec 16GB+ RAM.",
+    "source": "wishlist",
+    "status": "wishlist",
+    "categories": [
+      "code",
+      "instruction"
+    ],
+    "tags": [
+      "code",
+      "Meta",
+      "completion",
+      "spécialiste",
+      "local",
+      "bug"
+    ],
+    "quality_rating": 7,
+    "speed_rating": 7,
+    "context_window": 16384,
+    "size_category": "medium",
+    "params_count": "13B",
+    "ram_required_gb": 16,
+    "vram_required_gb": 0,
+    "disk_size_gb": 8,
+    "strengths": [
+      "Code spécialisé",
+      "Completion de code",
+      "Inférence de type",
+      "Génération de tests"
+    ],
+    "limitations": [
+      "Pas créatif",
+      "Conversation limitée",
+      "Anglais uniquement",
+      "Contexte court"
+    ],
+    "best_for": [
+      "Autocompletion",
+      "Génération de tests",
+      "Refactoring",
+      "Code review"
+    ],
+    "not_for": [
+      "Conversation",
+      "Création littéraire",
+      "Raisonnement non-code"
+    ],
+    "languages": [
+      "en"
+    ],
+    "primary_language": "en",
+    "provider": "ollama",
+    "architecture": "Transformer",
+    "license": "Llama Community",
+    "shared": false,
+    "price_per_million_input": 0.0,
+    "price_per_million_output": 0.0,
+    "notes": "Wishlist — à installer sur Bug pour du code spécialisé"
+  },
+  {
+    "name": "llama3.1:8b",
+    "display_name": "Llama 3.1 8B",
+    "description": "Le classique de Meta — rapide et fiable pour la conversation",
+    "long_description": "Llama 3.1 8B est le modèle de base de Meta. Rapide, fiable pour la conversation et le suivi d'instructions simples. Bon modèle d'entrée de gamme pour les machines légères. Contexte court (8K) et anglais uniquement.",
+    "source": "wishlist",
+    "status": "wishlist",
+    "categories": [
+      "general",
+      "conversation",
+      "instruction"
+    ],
+    "tags": [
+      "conversation",
+      "rapide",
+      "léger",
+      "Meta",
+      "local"
+    ],
+    "quality_rating": 5,
+    "speed_rating": 9,
+    "context_window": 8192,
+    "size_category": "small",
+    "params_count": "8B",
+    "ram_required_gb": 8,
+    "vram_required_gb": 0,
+    "disk_size_gb": 5,
+    "strengths": [
+      "Rapide",
+      "Bon pour conversation",
+      "Suivi d'instructions"
+    ],
+    "limitations": [
+      "Code basique",
+      "Raisonnement limité",
+      "Contexte très court (8K)",
+      "Anglais uniquement"
+    ],
+    "best_for": [
+      "Conversation",
+      "Questions simples",
+      "Instructions basiques"
+    ],
+    "not_for": [
+      "Code",
+      "Raisonnement",
+      "Multilingue"
+    ],
+    "languages": [
+      "en"
+    ],
+    "primary_language": "en",
+    "provider": "ollama",
+    "architecture": "Transformer",
+    "license": "Llama 3.1 Community",
+    "shared": false,
+    "price_per_million_input": 0.0,
+    "price_per_million_output": 0.0,
+    "notes": "Wishlist — modèle léger de secours"
+  }
+]

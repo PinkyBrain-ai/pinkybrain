@@ -1,0 +1,10 @@
+# PINKYBRAIN_BUG v3.5 - Dépendances pour l'autonomie avancée
+
+# Core dependencies
+aiofiles>=23.2.0
+
+# Auto-monitoring
+psutil>=5.9.0
+
+# Auto-support
+(les dépendances existantes sont déjà dans requirements.txt)

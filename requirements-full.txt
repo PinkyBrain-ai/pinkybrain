@@ -1,0 +1,20 @@
+# PinkyBrain v5.2.0 — Full Requirements
+# Everything for all features (P2P auth, encryption, mesh tracker, etc.)
+# These work on Linux, macOS, and Windows
+
+# Core (required)
+aiohttp>=3.9.0        # HTTP server, client, WebSocket
+
+# Monitoring (recommended)
+psutil>=5.9.0         # CPU/RAM monitoring, resource guard
+
+# Security & Encryption (optional — graceful fallback)
+PyNaCl>=1.5.0         # Ed25519 signing for P2P authentication
+cryptography>=41.0.0  # Fernet encryption for conversation store
+
+# Config formats (optional — JSON is built-in)
+PyYAML>=6.0           # YAML config files
+
+# Development & Testing
+pytest>=8.0.0         # Test framework
+pytest-asyncio>=0.23   # Async test support
