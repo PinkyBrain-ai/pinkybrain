@@ -103,7 +103,13 @@ Every AI tool wants your email, your phone number, and $20/month. Cloud APIs loc
 
 ## Quick Start
 
-### Standalone Install
+### 🖥️ Windows (Installer)
+
+Download `PinkyBrain-Setup-5.2.0.exe` from [Releases](https://github.com/PinkyBrain-ai/pinkybrain/releases), run as Administrator, and you're done. Includes embedded Python, Windows Service, system tray icon, and firewall rule.
+
+👉 Full guide: [`windows/README.md`](windows/README.md)
+
+### 🐧 Linux / macOS
 
 ```bash
 git clone https://github.com/PinkyBrain-ai/pinkybrain.git
