@@ -65,6 +65,30 @@ Your OpenClaw agent gets P2P AI access — query any model on the network, share
 
 **Either way, PinkyBrain is the same P2P network.** Standalone users and OpenClaw users share the same mesh.
 
+### 🧠 Hermes Agent Skill
+
+PinkyBrain also integrates with [Hermes Agent](https://hermes-agent.nousresearch.com) — an AI agent framework. This lets Hermes agents query models, check mesh status, use distributed memory, and route prompts by specialty through the PinkyBrain API.
+
+**Install (from repo):**
+```bash
+# Clone the repo
+git clone https://github.com/PinkyBrain-ai/pinkybrain.git /tmp/ub
+
+# Copy skill to Hermes skills directory
+mkdir -p ~/.hermes/skills/devops/pinkybrain
+cp /tmp/ub/skill-hermes/SKILL.md ~/.hermes/skills/devops/pinkybrain/
+rm -rf /tmp/ub
+
+# Done! Hermes now has PinkyBrain skill access
+```
+
+**Three agents, one network:**
+- **Bug** 🐛 — OpenClaw agent (P2P node, port 8080)
+- **Pinky** 🐭 — OpenClaw agent on ThinkPad (P2P node, port 8081)
+- **Brain** 🧠 — Hermes agent (P2P client, queries via API)
+
+**Either way, PinkyBrain is the same P2P network.** Standalone users, OpenClaw users, and Hermes agents all share the same mesh.
+
 ---
 
 ## Why this exists
