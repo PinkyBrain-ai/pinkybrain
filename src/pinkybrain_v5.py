@@ -761,28 +761,50 @@ class NodeIdentity:
         if HAS_NACL:
             # MED-02: Identity keys must NOT be derived from the shared P2P_SECRET.
             # Each node needs a unique, persistent identity key stored on disk.
+            # Backup mechanism: if main key is corrupted, try backup before generating new.
             identity_key_dir = Path.home() / ".pinkybrain"
             identity_key_dir.mkdir(parents=True, exist_ok=True)
             identity_key_path = identity_key_dir / f"{name}_identity.key"
 
             if identity_key_path.exists():
-                # Load existing identity key from disk
                 try:
                     key_bytes = identity_key_path.read_bytes()
                     self._signing_key = SigningKey(key_bytes)
                     logger.info(f"🔒 Loaded persistent identity key for node '{name}'")
                 except Exception as e:
-                    logger.warning(f"⚠️  Failed to load identity key for '{name}': {e}. Generating new one.")
-                    self._signing_key = SigningKey.generate()
-                    identity_key_path.write_bytes(self._signing_key.encode())
-                    identity_key_path.chmod(0o600)
-                    logger.info(f"🔒 Generated new identity key for node '{name}' (saved to {identity_key_path})")
+                    # Try backup key first
+                    backup_path = identity_key_path.with_suffix('.key.bak')
+                    if backup_path.exists():
+                        try:
+                            key_bytes = backup_path.read_bytes()
+                            self._signing_key = SigningKey(key_bytes)
+                            # Restore main key from backup
+                            identity_key_path.write_bytes(key_bytes)
+                            identity_key_path.chmod(0o600)
+                            logger.warning(f"⚠️ Restored identity key for '{name}' from backup")
+                            logger.info(f"🔒 Loaded persistent identity key for node '{name}'")
+                        except Exception:
+                            logger.critical(f"🚨 Identity key for '{name}' is corrupted AND backup failed. Generating NEW key.")
+                            logger.critical(f"🚨 This node's identity has CHANGED — all P2P trust relationships must be re-established.")
+                            self._signing_key = SigningKey.generate()
+                            identity_key_path.write_bytes(self._signing_key.encode())
+                            identity_key_path.chmod(0o600)
+                    else:
+                        logger.critical(f"🚨 Identity key for '{name}' is corrupted and no backup exists. Generating NEW key.")
+                        logger.critical(f"🚨 This node's identity has CHANGED — all P2P trust relationships must be re-established.")
+                        self._signing_key = SigningKey.generate()
+                        identity_key_path.write_bytes(self._signing_key.encode())
+                        identity_key_path.chmod(0o600)
             else:
-                # Generate a random key and persist it
+                # Generate new key
                 self._signing_key = SigningKey.generate()
                 identity_key_path.write_bytes(self._signing_key.encode())
                 identity_key_path.chmod(0o600)
-                logger.info(f"🔒 Generated new identity key for node '{name}' (saved to {identity_key_path})")
+                logger.info(f"🔒 Generated new identity key for node '{name}'")
+                # Save backup
+                backup_path = identity_key_path.with_suffix('.key.bak')
+                backup_path.write_bytes(self._signing_key.encode())
+                backup_path.chmod(0o600)
 
             self._verify_key = self._signing_key.verify_key
             self.public_key_hex = self._verify_key.encode().hex()
@@ -1882,6 +1904,17 @@ def load_config(config_path: str = None) -> Dict:
         except (OSError, json.JSONDecodeError) as e:
             logger.warning(f"Config load failed, using defaults: {e}")
 
+    # Default host depends on deployment mode:
+    # - Standalone (no remote peers) → 127.0.0.1 (secure default)
+    # - P2P mesh (remote peers configured) → 0.0.0.0 (required for connectivity)
+    has_remote_peers = any(
+        p.get("host", "localhost") not in ("localhost", "127.0.0.1", "::1")
+        for p in default_config.get("peers", [])
+    )
+    default_host = "0.0.0.0" if has_remote_peers else "127.0.0.1"
+    if "host" not in default_config:
+        default_config["host"] = default_host
+
     # CRIT-01 fix: Environment variable takes priority over config file
     env_secret = os.environ.get("P2P_SECRET")
     if env_secret:
@@ -2049,9 +2082,19 @@ class PinkyBrain:
         # Conversation Store — persistent conversations with privacy levels
         conv_config = config.get("conversation_store", {})
         if HAS_CONVERSATION_STORE and conv_config.get("enabled", True):
+            # MED-01: Each node has its own local encryption key — not derived from shared P2P_SECRET
+            _enc_key_path = Path.home() / ".pinkybrain" / f"{self.node_name}_conv.key"
+            _enc_key_path.parent.mkdir(parents=True, exist_ok=True)
+            if _enc_key_path.exists():
+                _conv_enc_password = _enc_key_path.read_text().strip()
+            else:
+                _conv_enc_password = _secrets.token_urlsafe(32)
+                _enc_key_path.write_text(_conv_enc_password)
+                _enc_key_path.chmod(0o600)
+                logger.info(f"🔒 Generated new conversation encryption key for node '{self.node_name}'")
             self.conversation_store = ConversationStore(
                 conversations_dir=os.path.expanduser(conv_config.get("storage_dir", "~/.pinkybrain/conversations")),
-                encryption_password=self.p2p_secret + "-conv-encrypt"  # MED-01: derive from p2p_secret
+                encryption_password=_conv_enc_password
             )
             logger.info(f"💾 Conversation Store: enabled ({conv_config.get('storage_dir', '~/.pinkybrain/conversations')})")
         else:
@@ -2205,6 +2248,7 @@ class PinkyBrain:
         # Gossip protocol state
         self._gossip_seen: Set[str] = set()  # message IDs already seen
         self._gossip_queue: deque = deque(maxlen=200)  # pending gossip messages
+        self._http_warned_peers: Set[str] = set()  # HIGH-03: track peers warned about plain HTTP
 
         # Event log
         self.event_log: deque = deque(maxlen=50)
@@ -4897,49 +4941,23 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
 
             for peer in self.peers:
                 if peer.available and peer.circuit_breaker.can_execute():
-                    # HIGH-03: Warn about plain HTTP peer connections
-                    uses_https = False
-                    url = f'https://{peer.host}:{peer.port}/api/memory/push'
-                    try:
-                        async with self.session.post(
-                            url,
-                            json=payload,
-                            headers=self._auth_headers(path='/api/memory/push'),
-                            timeout=aiohttp.ClientTimeout(total=5),
-                            ssl=False) as resp:
-                            if resp.status in (200, 201):
-                                uses_https = True
-                                logger.debug(f"Gossip push to {peer.name}: OK (HTTPS)")
-                    except (aiohttp.ClientError, asyncio.TimeoutError):
-                        pass  # HTTPS failed, will try HTTP below
-
-                    if not uses_https:
-                        url = f'http://{peer.host}:{peer.port}/api/memory/push'
-                        # HIGH-03: Warn loudly about plain HTTP P2P connections
+                    # HIGH-03: Warn once per peer about plain HTTP
+                    if peer.name not in self._http_warned_peers:
+                        self._http_warned_peers.add(peer.name)
                         has_tls = bool(os.environ.get('PINKYBRAIN_CERT') and os.environ.get('PINKYBRAIN_KEY'))
                         if has_tls:
-                            logger.warning(
-                                f"⚠️  HIGH-03: P2P gossip to peer '{peer.name}' uses plain HTTP. "
-                                f"This node has TLS configured (PINKYBRAIN_CERT/PINKYBRAIN_KEY set). "
-                                f"Peer '{peer.name}' should be upgraded to HTTPS to match."
-                            )
+                            logger.warning(f"⚠️ P2P gossip to peer '{peer.name}' uses plain HTTP — this node has TLS configured. Upgrade peer to HTTPS.")
                         else:
-                            logger.warning(
-                                f"⚠️  HIGH-03: P2P gossip to peer '{peer.name}' uses plain HTTP. "
-                                f"Consider configuring TLS (PINKYBRAIN_CERT/PINKYBRAIN_KEY) and upgrading peer to HTTPS."
-                            )
-                        try:
-                            async with self.session.post(
-                                url,
-                                json=payload,
-                                headers=self._auth_headers(path='/api/memory/push'),
-                                timeout=aiohttp.ClientTimeout(total=5)) as resp:
-                                if resp.status == 200:
-                                    logger.debug(f"Gossip push to {peer.name}: OK (HTTP)")
-                                else:
-                                    logger.debug(f"Gossip push to {peer.name}: {resp.status}")
-                        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-                            logger.debug(f"Gossip push to {peer.name} failed: {e}")
+                            logger.warning(f"⚠️ P2P gossip to peer '{peer.name}' uses plain HTTP — consider configuring PINKYBRAIN_CERT/PINKYBRAIN_KEY for TLS.")
+                    url = f'http://{peer.host}:{peer.port}/api/memory/push'
+                    try:
+                        async with self.session.post(url, json=payload, headers=self._auth_headers(path='/api/memory/push'), timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                            if resp.status == 200:
+                                logger.debug(f"Gossip push to {peer.name}: OK")
+                            else:
+                                logger.debug(f"Gossip push to {peer.name}: {resp.status}")
+                    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                        logger.debug(f"Gossip push to {peer.name} failed: {e}")
 
     async def _gossip_propagate(self, message: Dict):
         """Propagate a gossip message (if not already seen)."""
@@ -4977,17 +4995,14 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
             return
         for peer in self.peers:
             if peer.available and peer.circuit_breaker.can_execute():
-                # HIGH-03: Warn about plain HTTP peer connections
-                has_tls = bool(os.environ.get('PINKYBRAIN_CERT') and os.environ.get('PINKYBRAIN_KEY'))
-                logger.warning(
-                    f"⚠️  HIGH-03: P2P sync to peer '{peer.name}' uses plain HTTP. "
-                    + (
-                        f"This node has TLS configured (PINKYBRAIN_CERT/PINKYBRAIN_KEY set). "
-                        f"Peer '{peer.name}' should be upgraded to HTTPS to match."
-                        if has_tls else
-                        f"Consider configuring TLS (PINKYBRAIN_CERT/PINKYBRAIN_KEY) and upgrading peer to HTTPS."
-                    )
-                )
+                # HIGH-03: Warn once per peer about plain HTTP
+                if peer.name not in self._http_warned_peers:
+                    self._http_warned_peers.add(peer.name)
+                    has_tls = bool(os.environ.get('PINKYBRAIN_CERT') and os.environ.get('PINKYBRAIN_KEY'))
+                    if has_tls:
+                        logger.warning(f"⚠️ P2P sync to peer '{peer.name}' uses plain HTTP — this node has TLS configured. Upgrade peer to HTTPS.")
+                    else:
+                        logger.warning(f"⚠️ P2P sync to peer '{peer.name}' uses plain HTTP — consider configuring PINKYBRAIN_CERT/PINKYBRAIN_KEY for TLS.")
                 try:
                     async with self.session.post(
                         f'http://{peer.host}:{peer.port}/api/memory/sync',

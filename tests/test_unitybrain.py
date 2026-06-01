@@ -35,6 +35,7 @@ TEST_CONFIG = {
     "version": "5.2.0",
     "host": "127.0.0.1",
     "port": 18080,
+    "p2p_secret": "test-secret-for-unit-tests-minimum-16-chars",
     "ollama_host": "127.0.0.1",
     "ollama_port": 11434,
     "local_models": ["test-model:latest"],
