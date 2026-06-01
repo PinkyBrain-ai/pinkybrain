@@ -25,6 +25,7 @@ BUG_CONFIG = {
     "node_name": "bug",
     "version": "5.2.0",
     "host": "127.0.0.1",
+    "p2p_secret": "test-secret-for-unit-tests-minimum-16-chars",
     "port": 8080,
     "ollama_host": "127.0.0.1",
     "ollama_port": 11434,

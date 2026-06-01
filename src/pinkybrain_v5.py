@@ -163,7 +163,7 @@ MAX_SYNC_ENTRIES = 1000       # Max entries per P2P sync push
 WS_MAX_MSG_SIZE = 1048576     # Max WebSocket message size (1MB)
 HMAC_WINDOW_SECONDS = 30     # HMAC timestamp window (30s)
 MAX_NONCE_CACHE = 10000      # Max nonce cache size
-CSP_HEADER = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:"
+CSP_SCRIPT_NONCE_TEMPLATE = "default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:"
 
 # CORS allowed origins (configurable)
 CORS_ALLOWED_ORIGINS = [
@@ -759,11 +759,53 @@ class NodeIdentity:
         self.created = time.time()
 
         if HAS_NACL:
-            if secret_seed:
-                seed = hashlib.sha256(secret_seed.encode()).digest()[:32]
-                self._signing_key = SigningKey(seed)
+            # MED-02: Identity keys must NOT be derived from the shared P2P_SECRET.
+            # Each node needs a unique, persistent identity key stored on disk.
+            # Backup mechanism: if main key is corrupted, try backup before generating new.
+            identity_key_dir = Path.home() / ".pinkybrain"
+            identity_key_dir.mkdir(parents=True, exist_ok=True)
+            identity_key_path = identity_key_dir / f"{name}_identity.key"
+
+            if identity_key_path.exists():
+                try:
+                    key_bytes = identity_key_path.read_bytes()
+                    self._signing_key = SigningKey(key_bytes)
+                    logger.info(f"🔒 Loaded persistent identity key for node '{name}'")
+                except Exception as e:
+                    # Try backup key first
+                    backup_path = identity_key_path.with_suffix('.key.bak')
+                    if backup_path.exists():
+                        try:
+                            key_bytes = backup_path.read_bytes()
+                            self._signing_key = SigningKey(key_bytes)
+                            # Restore main key from backup
+                            identity_key_path.write_bytes(key_bytes)
+                            identity_key_path.chmod(0o600)
+                            logger.warning(f"⚠️ Restored identity key for '{name}' from backup")
+                            logger.info(f"🔒 Loaded persistent identity key for node '{name}'")
+                        except Exception:
+                            logger.critical(f"🚨 Identity key for '{name}' is corrupted AND backup failed. Generating NEW key.")
+                            logger.critical(f"🚨 This node's identity has CHANGED — all P2P trust relationships must be re-established.")
+                            self._signing_key = SigningKey.generate()
+                            identity_key_path.write_bytes(self._signing_key.encode())
+                            identity_key_path.chmod(0o600)
+                    else:
+                        logger.critical(f"🚨 Identity key for '{name}' is corrupted and no backup exists. Generating NEW key.")
+                        logger.critical(f"🚨 This node's identity has CHANGED — all P2P trust relationships must be re-established.")
+                        self._signing_key = SigningKey.generate()
+                        identity_key_path.write_bytes(self._signing_key.encode())
+                        identity_key_path.chmod(0o600)
             else:
+                # Generate new key
                 self._signing_key = SigningKey.generate()
+                identity_key_path.write_bytes(self._signing_key.encode())
+                identity_key_path.chmod(0o600)
+                logger.info(f"🔒 Generated new identity key for node '{name}'")
+                # Save backup
+                backup_path = identity_key_path.with_suffix('.key.bak')
+                backup_path.write_bytes(self._signing_key.encode())
+                backup_path.chmod(0o600)
+
             self._verify_key = self._signing_key.verify_key
             self.public_key_hex = self._verify_key.encode().hex()
             self.fingerprint = self.public_key_hex[:16]
@@ -1818,7 +1860,7 @@ def load_config(config_path: str = None) -> Dict:
     default_config = {
         "node_name": "unknown",
         "version": "5.2.0",
-        "host": "0.0.0.0",
+        "host": "127.0.0.1",
         "port": 8080,
         "ollama_host": "127.0.0.1",
         "ollama_port": 11434,
@@ -1862,21 +1904,28 @@ def load_config(config_path: str = None) -> Dict:
         except (OSError, json.JSONDecodeError) as e:
             logger.warning(f"Config load failed, using defaults: {e}")
 
+    # Default host depends on deployment mode:
+    # - Standalone (no remote peers) → 127.0.0.1 (secure default)
+    # - P2P mesh (remote peers configured) → 0.0.0.0 (required for connectivity)
+    has_remote_peers = any(
+        p.get("host", "localhost") not in ("localhost", "127.0.0.1", "::1")
+        for p in default_config.get("peers", [])
+    )
+    default_host = "0.0.0.0" if has_remote_peers else "127.0.0.1"
+    if "host" not in default_config:
+        default_config["host"] = default_host
+
     # CRIT-01 fix: Environment variable takes priority over config file
     env_secret = os.environ.get("P2P_SECRET")
     if env_secret:
         default_config["p2p_secret"] = env_secret
         logger.info("P2P_SECRET loaded from environment variable")
 
-    # Warn if secret is weak or default
+    # CRIT-01: Warn if secret is weak — actual startup block happens in PinkyBrain.__init__
     secret = default_config.get("p2p_secret", "")
-    WEAK_SECRETS = {
-        "changeme-configure-in-config", "changeme", "password", "secret",
-        "p2p_secret", "default", "test", "",
-    }
-    if secret in WEAK_SECRETS or len(secret) < 16:
+    if not secret or len(secret) < 16 or secret in {"changeme-configure-in-config", "changeme", "password", "secret", "p2p_secret", "default", "test"}:
         logger.warning(
-            "⚠️  P2P_SECRET is weak or default! Generate a strong secret with:\n"
+            "⚠️  P2P_SECRET is weak or not set! Generate a strong secret with:\n"
             "   python3 -c 'import secrets; print(secrets.token_hex(32))'\n"
             "   Then set it via P2P_SECRET environment variable or config file.\n"
             "   DO NOT commit secrets to version control!"
@@ -1892,6 +1941,9 @@ def load_config(config_path: str = None) -> Dict:
 class PinkyBrain:
     """PinkyBrain v5.2 — P2P Distributed AI Network"""
 
+    # MED-05: Maximum number of conversations allowed
+    MAX_CONVERSATIONS = 1000
+
     def __init__(self, config: Dict):
         self.config = config
         self.node_name = config["node_name"]
@@ -1903,11 +1955,14 @@ class PinkyBrain:
         self.local_models = config["local_models"]
         self.p2p_secret = os.environ.get("P2P_SECRET") or config.get("p2p_secret")
         if not self.p2p_secret:
-            logger.error("⚠️  P2P_SECRET not configured! Set P2P_SECRET env var or p2p_secret in config.")
-            logger.error("⚠️  Generate one with: python3 -c 'import secrets; print(secrets.token_hex(32))'")
-            self.p2p_secret = os.environ.get("P2P_SECRET", "changeme-configure-in-config")
-        elif self.p2p_secret in ("changeme", "changeme-configure-in-config"):
-            logger.warning("⚠️  P2P_SECRET is a known default — please change it!")
+            logger.critical("🚫 FATAL: P2P_SECRET not configured! Set P2P_SECRET env var or p2p_secret in config.")
+            logger.critical("Generate one with: python3 -c 'import secrets; print(secrets.token_hex(32))'")
+            raise RuntimeError("P2P_SECRET not configured — server startup blocked. Set P2P_SECRET env var or p2p_secret in config.")
+        # CRIT-01: Weak secret blocklist check — block startup on insecure secrets
+        WEAK_SECRETS = {"changeme-configure-in-config", "changeme", "password", "secret", "p2p_secret", "default", "test"}
+        if self.p2p_secret in WEAK_SECRETS or len(self.p2p_secret) < 16:
+            logger.critical("🚫 FATAL: P2P_SECRET is weak or too short (must be ≥16 chars and not a known default). Refusing to start.")
+            raise RuntimeError("Insecure P2P_SECRET detected — server startup blocked. Set a strong P2P_SECRET env var or p2p_secret in config.")
         self.stealth_mode = config.get("stealth_mode", False)
         self.share_ai = config.get("share_ai", False)
         # v5.2: Model networks — fine-grained model sharing permissions
@@ -2023,9 +2078,19 @@ class PinkyBrain:
         # Conversation Store — persistent conversations with privacy levels
         conv_config = config.get("conversation_store", {})
         if HAS_CONVERSATION_STORE and conv_config.get("enabled", True):
+            # MED-01: Each node has its own local encryption key — not derived from shared P2P_SECRET
+            _enc_key_path = Path.home() / ".pinkybrain" / f"{self.node_name}_conv.key"
+            _enc_key_path.parent.mkdir(parents=True, exist_ok=True)
+            if _enc_key_path.exists():
+                _conv_enc_password = _enc_key_path.read_text().strip()
+            else:
+                _conv_enc_password = _secrets.token_urlsafe(32)
+                _enc_key_path.write_text(_conv_enc_password)
+                _enc_key_path.chmod(0o600)
+                logger.info(f"🔒 Generated new conversation encryption key for node '{self.node_name}'")
             self.conversation_store = ConversationStore(
                 conversations_dir=os.path.expanduser(conv_config.get("storage_dir", "~/.pinkybrain/conversations")),
-                encryption_password=None  # Encryption configured separately
+                encryption_password=_conv_enc_password
             )
             logger.info(f"💾 Conversation Store: enabled ({conv_config.get('storage_dir', '~/.pinkybrain/conversations')})")
         else:
@@ -2179,6 +2244,7 @@ class PinkyBrain:
         # Gossip protocol state
         self._gossip_seen: Set[str] = set()  # message IDs already seen
         self._gossip_queue: deque = deque(maxlen=200)  # pending gossip messages
+        self._http_warned_peers: Set[str] = set()  # HIGH-03: track peers warned about plain HTTP
 
         # Event log
         self.event_log: deque = deque(maxlen=50)
@@ -2689,7 +2755,7 @@ class PinkyBrain:
         app.router.add_get('/api/brain/status', self.handle_brain_status)
         app.router.add_get('/api/brain/models', self.handle_brain_models)
         app.router.add_post('/api/brain/query', self._auth_required(self.handle_brain_query))
-        app.router.add_post('/api/brain/consensus', self.handle_brain_consensus)
+        app.router.add_post('/api/brain/consensus', self._auth_required(self.handle_brain_consensus))
         app.router.add_get('/api/quota', self.handle_quota)
         app.router.add_get('/api/quota/{peer}', self.handle_quota)
         app.router.add_post('/api/brain/chain', self._auth_required(self.handle_brain_chain))
@@ -2846,9 +2912,13 @@ class PinkyBrain:
             try:
                 with open(index_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                # LOW-04: CSP header
+                # MED-03: CSP nonce-based approach — generate a random nonce per request
+                csp_nonce = _secrets.token_urlsafe(24)
+                csp_header = CSP_SCRIPT_NONCE_TEMPLATE.format(nonce=csp_nonce)
+                # Inject nonce into script tags
+                content = content.replace('<script src=', f'<script nonce="{csp_nonce}" src=')
                 return web.Response(text=content, content_type='text/html',
-                                     headers={'Content-Security-Policy': CSP_HEADER})
+                                     headers={'Content-Security-Policy': csp_header})
             except OSError:
                 pass
 
@@ -2972,8 +3042,12 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
                 html += f'<div class="peer">🔍 {p["name"]} @ {p["host"]}:{p["port"]}</div>'
             html += '</div>'
 
-        html += """"</body></html>"""
-        return web.Response(text=html, content_type='text/html')
+        html += """""</body></html>"""
+        # MED-03: CSP nonce for legacy dashboard too
+        csp_nonce_legacy = _secrets.token_urlsafe(24)
+        csp_header_legacy = CSP_SCRIPT_NONCE_TEMPLATE.format(nonce=csp_nonce_legacy)
+        return web.Response(text=html, content_type='text/html',
+                             headers={'Content-Security-Policy': csp_header_legacy})
 
     async def handle_status(self, request: web.Request) -> web.Response:
         # HIGH-03 fix: Return minimal info for unauthenticated requests
@@ -3341,6 +3415,13 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
             if conv is None:
                 return web.json_response({"error": "conversation not found"}, status=404)
         else:
+            # MED-05: Enforce conversation count limit before creating a new one
+            conv_dir = self._conv_dir()
+            existing_count = len(list(conv_dir.glob("conv_*.json")))
+            if existing_count >= self.MAX_CONVERSATIONS:
+                return web.json_response(
+                    {"error": f"Conversation limit reached ({self.MAX_CONVERSATIONS}). Delete old conversations first."},
+                    status=429)
             conv_id = f"conv_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
             conv = {
                 "id": conv_id,
@@ -3445,7 +3526,9 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
             path.unlink()
             return web.json_response({"deleted": conv_id})
         except OSError as e:
-            return web.json_response({"error": str(e)}, status=500)
+            error_id = str(uuid.uuid4())[:8]
+            logger.error(f"Error {error_id}: {e}")
+            return web.json_response({"error": f"Internal server error (ref: {error_id})"}, status=500)
 
     async def handle_conversation_export(self, request: web.Request) -> web.Response:
         """POST /api/conversations/{id}/export — Export a conversation.
@@ -4639,7 +4722,9 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
             return web.json_response(result)
             
         except Exception as e:
-            return web.json_response({'error': str(e)}, status=500)
+            error_id = str(uuid.uuid4())[:8]
+            logger.error(f"Error {error_id}: {e}")
+            return web.json_response({'error': f'Internal server error (ref: {error_id})'}, status=500)
 
     # FEATURE 1: WEBSOCKET TEMPS RÉEL
     # ========================================================================
@@ -4852,13 +4937,17 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
 
             for peer in self.peers:
                 if peer.available and peer.circuit_breaker.can_execute():
+                    # HIGH-03: Warn once per peer about plain HTTP
+                    if peer.name not in self._http_warned_peers:
+                        self._http_warned_peers.add(peer.name)
+                        has_tls = bool(os.environ.get('PINKYBRAIN_CERT') and os.environ.get('PINKYBRAIN_KEY'))
+                        if has_tls:
+                            logger.warning(f"⚠️ P2P gossip to peer '{peer.name}' uses plain HTTP — this node has TLS configured. Upgrade peer to HTTPS.")
+                        else:
+                            logger.warning(f"⚠️ P2P gossip to peer '{peer.name}' uses plain HTTP — consider configuring PINKYBRAIN_CERT/PINKYBRAIN_KEY for TLS.")
+                    url = f'http://{peer.host}:{peer.port}/api/memory/push'
                     try:
-                        url = f'http://{peer.host}:{peer.port}/api/memory/push'
-                        async with self.session.post(
-                            url,
-                            json=payload,
-                            headers=self._auth_headers(path='/api/memory/push'),
-                            timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                        async with self.session.post(url, json=payload, headers=self._auth_headers(path='/api/memory/push'), timeout=aiohttp.ClientTimeout(total=5)) as resp:
                             if resp.status == 200:
                                 logger.debug(f"Gossip push to {peer.name}: OK")
                             else:
@@ -4902,6 +4991,14 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
             return
         for peer in self.peers:
             if peer.available and peer.circuit_breaker.can_execute():
+                # HIGH-03: Warn once per peer about plain HTTP
+                if peer.name not in self._http_warned_peers:
+                    self._http_warned_peers.add(peer.name)
+                    has_tls = bool(os.environ.get('PINKYBRAIN_CERT') and os.environ.get('PINKYBRAIN_KEY'))
+                    if has_tls:
+                        logger.warning(f"⚠️ P2P sync to peer '{peer.name}' uses plain HTTP — this node has TLS configured. Upgrade peer to HTTPS.")
+                    else:
+                        logger.warning(f"⚠️ P2P sync to peer '{peer.name}' uses plain HTTP — consider configuring PINKYBRAIN_CERT/PINKYBRAIN_KEY for TLS.")
                 try:
                     async with self.session.post(
                         f'http://{peer.host}:{peer.port}/api/memory/sync',
@@ -4961,9 +5058,9 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
                 await self._broadcast_ws({
                     'type': 'alert',
                     'alert': 'ollama_unreachable',
-                    'error': str(e),
+                    'error': 'ollama_unreachable',
                     'consecutive_failures': consecutive_failures,
-                    'message': f'Ollama is unreachable: {e}',
+                    'message': 'Ollama is unreachable — check server logs for details',
                     'node': self.node_name,
                     'timestamp': time.time()
                 })
@@ -5168,6 +5265,9 @@ async def main():
 
     brain = PinkyBrain(config)
     await brain.initialize()
+
+    if brain.host == "0.0.0.0":
+        logger.warning("⚠️ Listening on all interfaces — ensure firewall is configured")
 
     shutdown_event = asyncio.Event()
 

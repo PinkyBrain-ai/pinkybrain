@@ -46,6 +46,7 @@ TEST_CONFIG = {
     "providers": {},
     "public_mesh": {"enabled": False},
     "conversation_store": {"enabled": False},
+    "p2p_secret": "test-secret-for-unit-tests-minimum-16-chars",
 }
 
 
