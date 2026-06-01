@@ -59,8 +59,8 @@ services:
     #         - driver: nvidia
     #           count: 1
     #           capabilities: [gpu]
-    ports:
-      - "11434:11434"
+    expose:
+      - "11434"
     networks:
       - internal
     healthcheck:

@@ -44,10 +44,14 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8080
 HISTORY_FILE = os.path.expanduser("~/.pinkybrain_history.json")
 
-# SSL context (skip verification for local)
-ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
+# SSL context — secure by default; only disabled with --insecure flag
+ctx_secure = ssl.create_default_context()
+ctx_insecure = ssl.create_default_context()
+ctx_insecure.check_hostname = False
+ctx_insecure.verify_mode = ssl.CERT_NONE
+
+# Active context set in main() based on --insecure flag
+ctx = ctx_secure
 
 # ============================================================================
 # API CLIENT
@@ -90,7 +94,7 @@ class PinkyBrainClient:
         except urllib.error.HTTPError as e:
             try:
                 return json.load(e)
-            except:
+            except Exception:
                 return {"error": f"HTTP {e.code}"}
         except Exception as e:
             return {"error": str(e)}
@@ -158,7 +162,7 @@ class PinkyBrainShell:
                 with open(HISTORY_FILE) as f:
                     # LOW-08: Only load truncated prompts (no full content stored)
                     self.history = json.load(f)
-        except:
+        except Exception:
             self.history = []
 
     def _save_history(self):
@@ -177,7 +181,7 @@ class PinkyBrainShell:
                         safe_history.append(entry)
                 json.dump(safe_history, f, indent=2)
             os.chmod(HISTORY_FILE, 0o600)  # LOW-08
-        except:
+        except Exception:
             pass
 
     def run(self):
@@ -421,7 +425,7 @@ class PinkyBrainShell:
         if args:
             try:
                 limit = int(args)
-            except:
+            except Exception:
                 pass
 
         if not self.history:
@@ -515,7 +519,7 @@ def _load_config_and_client(node, host, port, secret):
                 port = config.get("port", port)
                 secret = config.get("p2p_secret", secret)
                 break
-            except:
+            except Exception:
                 pass
 
     return PinkyBrainClient(host=host, port=port, secret=secret)
@@ -1046,6 +1050,7 @@ Service:
     parser.add_argument("--host", default=DEFAULT_HOST, help="PinkyBrain host (default: %(default)s)")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="PinkyBrain port (default: %(default)s)")
     parser.add_argument("--secret", help="P2P secret for auth")
+    parser.add_argument("--insecure", action="store_true", help="Disable SSL verification (NOT recommended)")
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
@@ -1147,6 +1152,11 @@ Service:
     parser.add_argument("--ensemble", action="store_true", help=argparse.SUPPRESS)
 
     args = parser.parse_args()
+
+    # HIGH-01: Apply insecure SSL flag
+    global ctx
+    if args.insecure:
+        ctx = ctx_insecure
 
     # If a subcommand was given, run it
     if hasattr(args, "func") and args.func:
