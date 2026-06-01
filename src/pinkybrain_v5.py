@@ -1921,15 +1921,11 @@ def load_config(config_path: str = None) -> Dict:
         default_config["p2p_secret"] = env_secret
         logger.info("P2P_SECRET loaded from environment variable")
 
-    # Warn if secret is weak or default
+    # CRIT-01: Warn if secret is weak — actual startup block happens in PinkyBrain.__init__
     secret = default_config.get("p2p_secret", "")
-    WEAK_SECRETS = {
-        "changeme-configure-in-config", "changeme", "password", "secret",
-        "p2p_secret", "default", "test", "",
-    }
-    if secret in WEAK_SECRETS or len(secret) < 16:
+    if not secret or len(secret) < 16 or secret in {"changeme-configure-in-config", "changeme", "password", "secret", "p2p_secret", "default", "test"}:
         logger.warning(
-            "⚠️  P2P_SECRET is weak or default! Generate a strong secret with:\n"
+            "⚠️  P2P_SECRET is weak or not set! Generate a strong secret with:\n"
             "   python3 -c 'import secrets; print(secrets.token_hex(32))'\n"
             "   Then set it via P2P_SECRET environment variable or config file.\n"
             "   DO NOT commit secrets to version control!"
@@ -1959,9 +1955,9 @@ class PinkyBrain:
         self.local_models = config["local_models"]
         self.p2p_secret = os.environ.get("P2P_SECRET") or config.get("p2p_secret")
         if not self.p2p_secret:
-            logger.error("⚠️  P2P_SECRET not configured! Set P2P_SECRET env var or p2p_secret in config.")
-            logger.error("⚠️  Generate one with: python3 -c 'import secrets; print(secrets.token_hex(32))'")
-            self.p2p_secret = os.environ.get("P2P_SECRET", "changeme-configure-in-config")
+            logger.critical("🚫 FATAL: P2P_SECRET not configured! Set P2P_SECRET env var or p2p_secret in config.")
+            logger.critical("Generate one with: python3 -c 'import secrets; print(secrets.token_hex(32))'")
+            raise RuntimeError("P2P_SECRET not configured — server startup blocked. Set P2P_SECRET env var or p2p_secret in config.")
         # CRIT-01: Weak secret blocklist check — block startup on insecure secrets
         WEAK_SECRETS = {"changeme-configure-in-config", "changeme", "password", "secret", "p2p_secret", "default", "test"}
         if self.p2p_secret in WEAK_SECRETS or len(self.p2p_secret) < 16:
