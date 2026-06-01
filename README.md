@@ -5,10 +5,12 @@
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![P2P](https://img.shields.io/badge/P2P-100%25_Decentralized-green.svg)](https://github.com/PinkyBrain-ai/pinkybrain)
 [![Providers](https://img.shields.io/badge/providers-Ollama%20%7C%20OpenAI%20%7C%20Anthropic-purple.svg)](https://github.com/PinkyBrain-ai/pinkybrain)
 [![Specialist](https://img.shields.io/badge/specialist-12_schemas-orange.svg)](https://github.com/PinkyBrain-ai/pinkybrain)
+[![CI](https://img.shields.io/badge/CI-GitHub_Actions-4ac41.svg)](https://github.com/PinkyBrain-ai/pinkybrain/actions)
+[![Security](https://img.shields.io/badge/security-audited_2026-brightgreen.svg)](https://github.com/PinkyBrain-ai/pinkybrain)
 [![Website](https://img.shields.io/badge/website-pinkybrain.ai-blue.svg)](https://PinkyBrain-ai.github.io/pinkybrain)
 
 **Lightweight P2P distributed AI network.** No central server. No accounts. No premium tier. Connect machines, share models, sync memory. **v5.2: Multi-LLM specialist routing, Network Sync, Credit System — auto-detect prompt type, route to the best model.**
@@ -110,14 +112,14 @@ Every AI tool wants your email, your phone number, and $20/month. Cloud APIs loc
 | **Credit System** | Earn credits by sharing, spend credits by querying · Fair resource distribution |
 | **P2P Communication** | Bidirectional WebSocket (`/ws`) + HTTP REST — real-time sync with gossip protocol |
 | **Distributed Memory** | CRDT-based conflict-free state · Vector clocks · Gossip propagation · TTL support |
-| **Decentralized Auth** | Ed25519 identity · HMAC shared secret · Web of Trust (PGP-like) · Stealth mode |
+|| **Decentralized Auth** | Ed25519 identity (random, persistent, unique per node) · HMAC shared secret · Web of Trust (PGP-like) · Stealth mode |
 | **AI Routing** | Local models first → cloud on demand → peer failover · Ensemble consensus · Circuit breakers · Adaptive scheduler |
 | **Resource Guard** | Auto-pause sharing when CPU/RAM thresholds exceeded · Graceful degradation |
 | **Sharing Quotas** | Score-based query limits — **the more you share, the more you can use** |
 | **Auto-Discovery** | Static config · Tailscale auto-discovery · mDNS · Dynamic API registration |
 | **Interactive CLI** | `pinkybrain` command — chat with AI, manage memory, check peers and quotas |
 | **Web UI** | 🌍 9 languages · Chat with specialist/multi-LLM controls · Share dashboard · Network monitor · Config panel |
-| **Conversation Store** | Persistent chat history · Search · Export · Privacy levels (private/synced/shared/public) |
+|| **Conversation Store** | Persistent chat history · Search · Export · Privacy levels (private/synced/shared/public) · Per-node Fernet encryption by default · 1000 conversation quota |
 | **E2E Encryption** | Queries encrypted end-to-end through distributed inference · No peer can read your data |
 | **shared_models/** | Dedicated sharing zone · Cloud models NEVER shared by default · Instant unshare |
 | **4 Deploy Modes** | Service (headless) · App (GUI) · Sidekick (tray) · Plugin (VS Code/Obsidian) |
@@ -329,11 +331,12 @@ curl -X POST http://localhost:8080/api/query \
 
 ## Configuration
 
-| Key | Default | Description |
+|| Key | Default | Description |
 |-----|---------|-------------|
 | `node_name` | required | Unique node name |
 | `port` | `8080` | HTTP/WS port |
-| `p2p_secret` | required | HMAC shared secret for peer auth |
+| `p2p_secret` | **required** | HMAC shared secret for peer auth (≥16 chars, strong random) |
+| `host` | `127.0.0.1` (standalone) / `0.0.0.0` (P2P mesh with remote peers) | Listen address |
 | `providers` | `{}` | LLM providers (Ollama, OpenAI, Anthropic, custom) |
 | `peers` | `[]` | Peer nodes |
 | `share_ai` | `true` | Share CPU/RAM/models with network (participant mode) |
@@ -430,6 +433,41 @@ pinkybrain --multi compare -q "Explain quantum entanglement"
 curl -X POST http://localhost:8080/api/multi \
   -d '{"prompt":"Best approach for microservices?","mode":"vote","models":["deepseek-v3.1:671b-cloud","glm-5.1:cloud","qwen3-coder-next:cloud"]}'
 ```
+
+---
+
+## 🔒 Security
+
+Security audit performed **June 2026** by Cortex 🧬 (AzilBugFundation). All critical and high findings patched.
+
+### Security Features
+
+- **HMAC Authentication** — SHA-256 HMAC with nonce-based replay protection (30s window, 10K nonce cache)
+- **Ed25519 Identity** — Each node has a unique persistent identity key (randomly generated, stored locally with `0o600` permissions, automatic backup)
+- **P2P Secret Enforcement** — Server refuses to start with weak secrets (<16 chars or known defaults). Generate one: `python3 -c 'import secrets; print(secrets.token_hex(32))'`
+- **Conversation Encryption** — Per-node Fernet encryption (PBKDF2 + AES) with locally-generated keys. Conversations on one node cannot be decrypted by peers
+- **Web of Trust** — PGP-like trust model for peer verification via Ed25519 signatures
+- **CSP Nonces** — Content Security Policy uses per-request nonces (no `unsafe-inline` for scripts)
+- **Rate Limiting** — Dual-layer: auth rate limiter + global (30 req/s, burst 60)
+- **Conversation Quota** — Max 1000 conversations per node (prevents disk exhaustion)
+- **Secure by Default** — Host `127.0.0.1` (standalone), SSL verification ON in CLI, generic error messages with correlation IDs
+- **Docker Hardened** — `no-new-privileges`, `read_only`, non-root user, Ollama on internal network only
+- **Path Traversal Protection** — Request validation rejects `/`, `..`, `\\` in conversation paths
+- **Token Blacklist** — Persistent with `0o600` file permissions
+
+### Deployment Checklist
+
+- ✅ Set a strong `P2P_SECRET` (≥32 chars random). Never commit secrets to git — use `.env` or environment variables
+- ✅ Configure TLS (`PINKYBRAIN_CERT`/`PINKYBRAIN_KEY`) for P2P connections between nodes on different machines
+- ✅ Keep `host: 127.0.0.1` for standalone deployments. Only use `0.0.0.0` when remote peers need access, and configure a firewall
+- ✅ Run `ruff check src/` before pushing — CI enforces linting
+- ✅ Back up `~/.pinkybrain/{node}_identity.key` and `{node}_conv.key` — losing these means identity/trust reset and data loss
+
+### Known Limitations (Low Severity)
+
+- No CSRF tokens (atténué par header-based auth, not cookie-based)
+- Auto-updater downloads without integrity verification (checksum/signature planned)
+- CSP `connect-src` allows `ws:`/`wss:` to any host (not yet scoped to configured peers)
 
 ---
 
