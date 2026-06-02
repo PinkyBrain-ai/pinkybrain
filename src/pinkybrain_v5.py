@@ -1405,19 +1405,28 @@ class PeerDiscovery:
 
     async def discover_all(self) -> List[Dict]:
         found = {}
+        # Build a port lookup from config peers (by hostname)
+        config_port_by_host = {}
         for p in self.config_peers:
-            key = f"{p['host']}:{p.get('port', 8081)}"
-            found[key] = p
+            key_name = p.get('name', '')
+            key_host = f"{p['host']}:{p.get('port', 8081)}"
+            config_port_by_host[key_name] = p.get('port', 8081)
+            found[key_host] = p
 
         ts_peers = await self._discover_tailscale()
         for p in ts_peers:
-            key = f"{p['host']}:{p.get('port', 8081)}"
+            # Use port from config peer if hostname matches, otherwise use discovered port
+            p_port = config_port_by_host.get(p.get('name'), p.get('port', 8081))
+            p['port'] = p_port
+            key = f"{p['host']}:{p_port}"
             if key not in found:
                 found[key] = p
 
         mdns_peers = await self._discover_mdns()
         for p in mdns_peers:
-            key = f"{p['host']}:{p.get('port', 8081)}"
+            p_port = config_port_by_host.get(p.get('name'), p.get('port', 8081))
+            p['port'] = p_port
+            key = f"{p['host']}:{p_port}"
             if key not in found:
                 found[key] = p
 
@@ -1446,11 +1455,19 @@ class PeerDiscovery:
                         own_ts_ip = status.get('Self', {}).get('TailscaleIPs', [])
                         if own_ts_ip and any(ip in own_ts_ip for ip in ips):
                             continue
-                        # Bug #5 fix: skip if same IP as a config peer but different port (duplicate)
-                        # Also skip if IP matches our own Tailscale IP
+                        # Bug #5 fix revised: match config peer by hostname or IP to get correct port
+                        # Avoid duplicates: if config peer already covers this IP, skip
+                        _ts_port = 8081  # default fallback
                         is_dup = False
                         for cp in self.config_peers:
-                            if ips and ips[0] == cp.get('host') and 8081 != cp.get('port', 8080):
+                            if ips and ips[0] == cp.get('host'):
+                                # Config peer already covers this IP — use its port
+                                _ts_port = cp.get('port', 8081)
+                                is_dup = True  # skip Tailscale entry, config already has it
+                                break
+                            # Also match by Tailscale hostname
+                            if peer.get('HostName') == cp.get('name'):
+                                _ts_port = cp.get('port', 8081)
                                 is_dup = True
                                 break
                         if is_dup:
@@ -1459,7 +1476,7 @@ class PeerDiscovery:
                             peers.append({
                                 'name': peer.get('HostName', 'unknown'),
                                 'host': ips[0],
-                                'port': 8081,
+                                'port': _ts_port,
                                 'source': 'tailscale'
                             })
         except (OSError, json.JSONDecodeError, asyncio.TimeoutError):
