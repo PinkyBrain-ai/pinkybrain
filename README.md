@@ -471,6 +471,22 @@ Security audit performed **June 2026** by Cortex 🧬 (AzilBugFundation). All cr
 
 ---
 
+## 🗺️ Roadmap
+
+| Status | Feature |
+|--------|----------|
+| ✅ | P2P networking, CRDT memory, specialist router |
+| ✅ | Multi-LLM providers (Ollama, OpenAI, Anthropic) |
+| ✅ | Credit system, Web of Trust, E2E encryption |
+| ✅ | OpenClaw + Hermes agent skills |
+| 🔜 | **World Model integration** — Run [DreamX-World](https://github.com/AMAP-ML/DreamX-World) on mesh nodes with GPU, serve interactive world generation via PinkyBrain API |
+| 🔜 | 14B model support, audio-video joint generation |
+| 🔜 | Distributed GPU orchestration — share GPU across nodes |
+
+**Want to help?** Nodes with GPUs are especially valuable — join the mesh and help us build distributed world generation! 🌍
+
+---
+
 ## Philosophy
 
 **No mining. No premium tier. No hidden costs.** Just free, open, distributed AI.
