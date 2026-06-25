@@ -13,7 +13,7 @@
 [![Security](https://img.shields.io/badge/security-audited_2026-brightgreen.svg)](https://github.com/PinkyBrain-ai/pinkybrain)
 [![Website](https://img.shields.io/badge/website-pinkybrain.ai-blue.svg)](https://PinkyBrain-ai.github.io/pinkybrain)
 
-**Lightweight P2P distributed AI network.** No central server. No accounts. No premium tier. Connect machines, share models, sync memory. **v5.2: Multi-LLM specialist routing, Network Sync, Credit System — auto-detect prompt type, route to the best model.**
+**A platform for AI development in every domain.** No central server. No accounts. No premium tier. Connect machines, share models, sync memory. **v5.2: Multi-LLM specialist routing, Network Sync, Credit System — auto-detect prompt type, route to the best model.**
 
 🌐 **[Website & Live Demo →](https://PinkyBrain-ai.github.io/pinkybrain)**
 
@@ -473,17 +473,24 @@ Security audit performed **June 2026** by Cortex 🧬 (AzilBugFundation). All cr
 
 ## 🗺️ Roadmap
 
+**PinkyBrain is a platform for AI development in every domain** — not just chat, not just code, not just one thing. Health, education, science, art, music, agriculture, law, language… if a domain exists, PinkyBrain should help develop AI for it.
+
 | Status | Feature |
 |--------|----------|
 | ✅ | P2P networking, CRDT memory, specialist router |
 | ✅ | Multi-LLM providers (Ollama, OpenAI, Anthropic) |
 | ✅ | Credit system, Web of Trust, E2E encryption |
 | ✅ | OpenClaw + Hermes agent skills |
-| 🔜 | **World Model integration** — Run [DreamX-World](https://github.com/AMAP-ML/DreamX-World) on mesh nodes with GPU, serve interactive world generation via PinkyBrain API |
+| ✅ | 12 specialist schemas (coder, analyst, creative…)
+| 🔜 | **Domain specialist packs** — curated model + prompt combos for health, education, science, art, music, agriculture, law, and more |
+| 🔜 | **World Model integration** — Run [DreamX-World](https://github.com/AMAP-ML/DreamX-World) on GPU nodes, serve interactive world generation via PinkyBrain API |
+| 🔜 | **Distributed GPU orchestration** — share GPU across nodes, any model, any domain |
+| 🔜 | **Community specialist registry** — publish and discover domain-specific AI specialists |
 | 🔜 | 14B model support, audio-video joint generation |
-| 🔜 | Distributed GPU orchestration — share GPU across nodes |
 
-**Want to help?** Nodes with GPUs are especially valuable — join the mesh and help us build distributed world generation! 🌍
+**Every domain deserves AI. PinkyBrain makes it distributed, free, and open.**
+
+**Want to help?** Nodes with GPUs, domain experts, prompt engineers — there's a place for everyone on the mesh. 🌍
 
 ---
 
