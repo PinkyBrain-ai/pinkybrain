@@ -74,7 +74,6 @@ Changelog = "https://github.com/PinkyBrain-ai/pinkybrain/blob/main/CHANGELOG.md"
 
 [project.scripts]
 pinkybrain = "src.pinkybrain_cli:main"
-pinkybrain = "src.pinkybrain_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -92,4 +91,4 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "-v --cov=src --cov-report=term-missing --cov-report=html"
+addopts = "-v"

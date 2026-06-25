@@ -601,7 +601,7 @@ class TestTrackerClientAsync(unittest.TestCase):
 
         client._session = mock_session
 
-        result = asyncio.get_event_loop().run_until_complete(client.announce(address='1.2.3.4:8081'))
+        result = asyncio.run(client.announce(address='1.2.3.4:8081'))
         self.assertTrue(result)
         # Verify POST was called
         mock_session.post.assert_called_once()
@@ -623,7 +623,7 @@ class TestTrackerClientAsync(unittest.TestCase):
 
         client._session = mock_session
 
-        result = asyncio.get_event_loop().run_until_complete(client.announce())
+        result = asyncio.run(client.announce())
         self.assertFalse(result)
         # Tracker should be in backoff
         self.assertTrue(client.trackers[0].is_backing_off)
@@ -644,7 +644,7 @@ class TestTrackerClientAsync(unittest.TestCase):
 
         # Session is None (not started), should fall back to local
         client._session = None
-        results = asyncio.get_event_loop().run_until_complete(
+        results = asyncio.run(
             client.discover(model='glm-5.1:cloud')
         )
         self.assertEqual(len(results), 1)
