@@ -550,7 +550,7 @@ def validate_catalog_schema(data: List[Dict[str, Any]]) -> bool:
                     logger.error(f"🚨 Catalog validation: entry '{name}' field '{text_field}' contains HTML tags")
                     return False
                 # Pas de scripts
-                if re.search(r'(?:script|javascript|onerror|onload|eval|exec)', val, re.IGNORECASE):
+                if re.search(r'\b(?:script|javascript|onerror|onload|eval|exec)\b', val, re.IGNORECASE):
                     logger.error(f"🚨 Catalog validation: entry '{name}' field '{text_field}' contains suspicious content")
                     return False
         

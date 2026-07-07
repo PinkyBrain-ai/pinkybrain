@@ -899,7 +899,7 @@ class TestLifecycle:
 class TestSecurity:
     def test_no_private_data_in_announcement(self):
         """Scheduler should never include private config data."""
-        s = make_scheduler(config={"p2p_secret": "super_secret", "api_key": "key123"})
+        s = make_scheduler(config={"p2p_secret": "test-secret-for-unit-tests-minimum-16-chars", "api_key": "key123"})
         # Config should not leak
         status = s.get_status()
         # Status dict should not contain secrets

@@ -11,11 +11,16 @@ P2P_SECRET
 .env
 
 # Config files contain IPs, secrets, and personal data
-# Use node-v5.example.json as template
+# Use node-*.example.json as template
 config/bug*.json
 config/pinky*.json
 config/node-*.json
 !config/node-v5.example.json
+!config/node-bug.example.json
+!config/node-pinky.example.json
+!config/node-brain.example.json
+!config/node-xamoht.example.json
+!config/node-xamoth.example.json
 
 # Persistent data (may contain user data)
 shared_memory/

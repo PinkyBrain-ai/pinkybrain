@@ -158,11 +158,9 @@ generate_config() {
     cat > "$UB_CONFIG" << 'CONFIGEOF'
 {
   "node_name": "pinkybrain-node",
-  "private": {
-    "p2p_secret": "CHANGE_ME_TO_A_STRONG_SECRET",
-    "peers": [],
-    "share_ai": true
-  },
+  "p2p_secret": "CHANGE_ME_use_env_var_P2P_SECRET",
+  "share_ai": true,
+  "peers": [],
   "public_mesh": {
     "enabled": false,
     "tracker_url": "https://tracker.pinkybrain.ai",
@@ -185,16 +183,17 @@ generate_config() {
 }
 CONFIGEOF
 
-    # Generate a random p2p_secret
+    # Generate a random p2p_secret and write to env file (HIGH-B fix)
     SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
-    if command -v sed &>/dev/null; then
-        sed -i.bak "s|CHANGE_ME_TO_A_STRONG_SECRET|$SECRET|" "$UB_CONFIG"
-        rm -f "$UB_CONFIG.bak"
-    fi
+    ENV_DIR="/etc/pinkybrain"
+    mkdir -p "$ENV_DIR"
+    echo "P2P_SECRET=${SECRET}" > "$ENV_DIR/env"
+    chmod 600 "$ENV_DIR/env"
+    chown "$UB_USER:$UB_GROUP" "$ENV_DIR/env"
 
     chown "$UB_USER:$UB_GROUP" "$UB_CONFIG"
-    chmod 640 "$UB_CONFIG"
-    ok "Config generated at $UB_CONFIG (p2p_secret auto-generated)"
+    chmod 600 "$UB_CONFIG"
+    ok "Config generated at $UB_CONFIG (p2p_secret in $ENV_DIR/env)"
 }
 
 install_package() {

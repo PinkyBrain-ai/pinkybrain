@@ -6,7 +6,7 @@ echo "🚀 DÉMARRAGE RAPIDE - PINKYBRAIN v5.2"
 echo "=========================================="
 echo ""
 
-WORKSPACE="/home/user/.openclaw/workspace"
+WORKSPACE="$HOME/.openclaw/workspace"
 NM_DIR="$WORKSPACE/PinkyBrain"
 
 # Arrêter les services existants

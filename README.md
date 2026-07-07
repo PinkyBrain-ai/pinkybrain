@@ -84,10 +84,12 @@ rm -rf /tmp/ub
 # Done! Hermes now has PinkyBrain skill access
 ```
 
-**Three agents, one network:**
-- **Bug** 🐛 — OpenClaw agent (P2P node, port 8080)
-- **Pinky** 🐭 — OpenClaw agent on ThinkPad (P2P node, port 8081)
-- **Brain** 🧠 — Hermes agent (P2P client, queries via API)
+**Five agents, one network:**
+- **Bug** 🐛 — OpenClaw agent on laptop (WSL2) (P2P node, port 8080)
+- **Pinky** 🐭 — OpenClaw agent on Fujitsu Siemens (P2P node, port 8081)
+- **Brain** 🧠 — Hermes agent on laptop (WSL2) (P2P node, port 8082)
+- **Xamoht** 🤖 — Agent on Thomax machine (P2P node, port 8083)
+- **Xamoth** 🦾 — Agent on Thomax machine (P2P node, port 8084)
 
 **Either way, PinkyBrain is the same P2P network.** Standalone users, OpenClaw users, and Hermes agents all share the same mesh.
 
@@ -123,7 +125,7 @@ Every AI tool wants your email, your phone number, and $20/month. Cloud APIs loc
 | **E2E Encryption** | Queries encrypted end-to-end through distributed inference · No peer can read your data |
 | **shared_models/** | Dedicated sharing zone · Cloud models NEVER shared by default · Instant unshare |
 | **4 Deploy Modes** | Service (headless) · App (GUI) · Sidekick (tray) · Plugin (VS Code/Obsidian) |
-| **Stats** | ⚡ 0.16s startup · 💾 17MB RAM · 📦 4 dependencies (aiohttp, psutil, PyYAML, PyNaCl optional) |
+| **Stats** | ⚡ 0.16s startup · 💾 17MB RAM · 📦 4 dependencies (aiohttp, psutil, PyYAML, cryptography; PyNaCl optional) |
 
 ---
 
@@ -155,7 +157,7 @@ pinkybrain start        # Start P2P server
 ### Manual Install (no setup.py)
 
 ```bash
-pip install aiohttp psutil
+pip install aiohttp psutil PyYAML cryptography
 python3 src/pinkybrain_v5.py mynode
 ```
 
@@ -200,7 +202,7 @@ Queries with `"model": "gpt-4o"` are automatically routed to OpenAI. No code cha
 
 ---
 
-## Sharing Quotas — Plus tu partages, plus tu peux utiliser
+## Sharing Quotas — The more you share, the more you can use
 
 Every peer gets a **sharing score** (0-100) based on contribution:
 

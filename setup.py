@@ -3,7 +3,7 @@
 PinkyBrain v5.2.0 — Setup & Install
 
 Installe PinkyBrain sur n'importe quelle machine Linux/macOS.
-Pas besoin d'OpenClaw. Juste Python 3.8+ et Ollama.
+Pas besoin d'OpenClaw. Juste Python 3.11+ et Ollama.
 
 Usage:
     python3 setup.py          # Installation interactive
@@ -28,7 +28,7 @@ BIN_DIR = Path.home() / ".local" / "bin"
 SERVICE_FILE = Path.home() / ".config" / "systemd" / "user" / "pinkybrain.service"
 
 REQUIREMENTS = [
-    ("aiohttp", "aiofootp>=3.9.0", "aiohttp-3.9.0-py3-none-any.whl"),  # MED-06: pinned
+    ("aiohttp", "aiohttp>=3.9.0", "aiohttp-3.9.0-py3-none-any.whl"),  # MED-06: pinned
     ("psutil", "psutil>=5.9.0", None),  # MED-06: system pkg, no hash
 ]
 
@@ -58,10 +58,10 @@ def run(cmd, **kwargs):
 
 
 def check_python():
-    """Check Python version >= 3.8"""
+    """Check Python version >= 3.11"""
     ver = sys.version_info
-    if ver < (3, 8):
-        print(c("red", f"❌ Python 3.8+ required (you have {ver.major}.{ver.minor})"))
+    if ver < (3, 11):
+        print(c("red", f"❌ Python 3.11+ required (you have {ver.major}.{ver.minor})"))
         return False
     print(c("green", f"✅ Python {ver.major}.{ver.minor}.{ver.micro}"))
     return True
@@ -220,7 +220,38 @@ def create_default_config(node_name=None, port=8080, share_ai=True, secret=None)
         "seed_nodes": [],
         "token_lifetime": 86400,
         "token_rotation_interval": 3600,
-        "discovery_interval": 300
+        "discovery_interval": 300,
+        "public_mesh": {
+            "enabled": False,
+            "tracker_url": "https://tracker.pinkybrain.ai",
+            "max_ram_share_mb": 256,
+            "max_cpu_percent": 10,
+            "gpu_share": False,
+            "models_share": [],
+            "priority": "local_first",
+            "bandwidth_limit_kbps": 5000,
+            "contribution_score": 0,
+            "stealth_mode": False
+        },
+        "conversation_store": {
+            "enabled": True,
+            "storage_dir": "~/.pinkybrain/conversations",
+            "encryption": False,
+            "max_conversation_size_mb": 100,
+            "default_privacy": "private",
+            "auto_save": True,
+            "search_enabled": True
+        },
+        "bandwidth_quota": {
+            "monthly_data_gb": 5.0,
+            "bandwidth_limit_kbps": 5000,
+            "quota_period": "monthly"
+        },
+        "credit_system": {
+            "base_allocation": 100,
+            "max_balance": 10000,
+            "carry_over_pct": 0.5
+        }
     }
 
     config_path = INSTALL_DIR / "config" / f"{node_name}.json"
@@ -456,4 +487,16 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # When imported by pip/setuptools build backend (not run directly by user),
+    # call setuptools setup() so the build backend can produce metadata.
+    import inspect as _inspect
+    _stack = _inspect.stack()
+    _build_invocation = any(
+        "pyproject_hooks" in f.filename or "build_meta" in f.filename
+        for f in _stack
+    )
+    if _build_invocation:
+        from setuptools import setup as _setup
+        _setup(name="pinkybrain", version="5.2.0", packages=["src"])
+    else:
+        main()

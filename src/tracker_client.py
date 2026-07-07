@@ -563,11 +563,33 @@ class TrackerClient:
         matches.sort(key=lambda n: (-n.score, -n.last_seen))
         return matches[:max_results]
 
+    def _is_valid_node_address(self, address: str) -> bool:
+        """Validate that a tracker-discovered node address is not internal/loopback (MED-D fix)."""
+        if not address:
+            return True  # empty address is OK (no SSRF risk)
+        try:
+            import ipaddress
+            # Extract host from host:port
+            host = address.split(':')[0].split('/')[-1]  # handle http://host:port
+            ip = ipaddress.ip_address(host)
+            # Reject loopback, private, link-local
+            if ip.is_loopback or ip.is_private or ip.is_link_local:
+                logger.warning(f"Rejected internal node address from tracker: {address}")
+                return False
+        except ValueError:
+            # Not an IP (hostname) — allow it, DNS resolution will handle it
+            pass
+        return True
+
     def _update_known_node(self, data: Dict):
         """Update or create a KnownNode from tracker data."""
         node_id = data.get('node_id', '')
         address = data.get('address', '')
         if not node_id and not address:
+            return
+
+        # Validate address to prevent SSRF (MED-D fix)
+        if address and not self._is_valid_node_address(address):
             return
 
         # Use address as fallback key if no node_id

@@ -11,6 +11,8 @@ services:
     container_name: pinkybrain
     restart: always
     ports:
+      # For multi-node deployments on the same host, map each node to a
+      # different host port (e.g. 8081:8080 for pinky, 8082:8080 for brain).
       - "8080:8080"   # Private API (restrict with firewall)
       - "8090:8090"   # Public mesh (expose as needed)
     volumes:

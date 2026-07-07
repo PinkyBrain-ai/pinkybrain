@@ -100,6 +100,24 @@ class BrainLLM:
 
     # ─── Auth Headers ──────────────────────────────────────────
 
+    def _node_messenger_headers(self, path: str = "/search") -> Dict[str, str]:
+        """Generate HMAC-signed headers for Node Messenger requests.
+        Replaces raw p2p_secret in X-Node-Secret header (CRIT-A security fix).
+        """
+        if not self.p2p_secret:
+            logger.warning("P2P_SECRET not configured — Node Messenger requests may be rejected")
+            return {}
+        ts = str(int(time.time()))
+        msg = f"{path}:{ts}"
+        sig = hmac_mod.new(
+            self.p2p_secret.encode(), msg.encode(), hashlib.sha256
+        ).hexdigest()
+        return {
+            "X-Node-Messenger-Auth": sig,
+            "X-PinkyBrain-TS": ts,
+            "X-PinkyBrain-Node": self.node_name,
+        }
+
     def _auth_headers(self, path: str = "/api/query") -> Dict[str, str]:
         """Generate signed auth headers for P2P requests (v5.2).
         Uses HMAC with P2P secret, matching PinkyBrain's _auth_headers().
@@ -459,7 +477,7 @@ class BrainLLM:
         """Get relevant context from persistent memory."""
         memory_info = MEMORY_NODES.get(self.node_name, {})
         try:
-            headers = {"X-Node-Secret": self.p2p_secret or os.environ.get("P2P_SECRET", "")}
+            headers = self._node_messenger_headers("/search")
             async with self.session.get(
                 f"http://127.0.0.1:{memory_info.get('port', 8084)}/search",
                 params={"q": query, "limit": str(limit)},

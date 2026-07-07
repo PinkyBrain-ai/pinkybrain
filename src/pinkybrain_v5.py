@@ -163,7 +163,7 @@ MAX_SYNC_ENTRIES = 1000       # Max entries per P2P sync push
 WS_MAX_MSG_SIZE = 1048576     # Max WebSocket message size (1MB)
 HMAC_WINDOW_SECONDS = 30     # HMAC timestamp window (30s)
 MAX_NONCE_CACHE = 10000      # Max nonce cache size
-CSP_SCRIPT_NONCE_TEMPLATE = "default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:"
+CSP_SCRIPT_NONCE_TEMPLATE = "default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws://127.0.0.1:* wss://127.0.0.1:* ws://localhost:* wss://localhost:*"
 
 # CORS allowed origins (configurable)
 CORS_ALLOWED_ORIGINS = [
@@ -2782,7 +2782,7 @@ class PinkyBrain:
         app.router.add_get('/api/capabilities', self.handle_capabilities)
         app.router.add_get('/api/score/{peer}', self.handle_gamified_score)
         app.router.add_get('/api/discover', self.handle_discover)
-        app.router.add_get('/api/update', self.handle_update_check)
+        app.router.add_get('/api/update', self._auth_required(self.handle_update_check))
         app.router.add_get('/api/daemon', self.handle_daemon_status)
         app.router.add_post('/api/agent/query', self._auth_required(self.handle_agent_query))
         # WebSocket endpoint
@@ -4496,15 +4496,27 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
         self.log_event("config", f"Config updated: {list(applied.keys())}")
         return web.json_response({"status": "updated", "applied": self._mask_config(applied)})
 
+    def _strip_secrets_for_persist(self) -> dict:
+        """Return a copy of config with secret keys replaced by placeholder."""
+        safe = {}
+        for k, v in self.config.items():
+            if k in self.SECRET_KEYS or any(s in k.lower() for s in self.SECRET_KEYS):
+                safe[k] = "CHANGE_ME_use_env_var_P2P_SECRET"
+            else:
+                safe[k] = v
+        return safe
+
     def _persist_config(self):
-        """Save current config to disk."""
+        """Save current config to disk (secrets stripped, file perms 0o600)."""
         try:
             config_dir = Path.home() / ".pinkybrain" / "config"
             config_dir.mkdir(parents=True, exist_ok=True)
             config_path = config_dir / f"{self.node_name}.json"
+            safe_config = self._strip_secrets_for_persist()
             with open(config_path, 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, ensure_ascii=False, indent=2)
-            logger.info(f"Config persisted to {config_path}")
+                json.dump(safe_config, f, ensure_ascii=False, indent=2)
+            os.chmod(config_path, 0o600)
+            logger.info(f"Config persisted to {config_path} (secrets stripped)")
         except OSError as e:
             logger.error(f"Failed to persist config: {e}")
 
@@ -4989,8 +5001,18 @@ h1 {{ color: #4ecdc4; }} h2 {{ color: #888; font-size: 0.9rem; text-transform: u
         elif msg_type == "trust_sign":
             signer = message.get("signer", "")
             target = message.get("target", "")
-            if signer and target:
-                self.web_of_trust.add_trust(signer, target)
+            signature = message.get("signature", "")
+            if signer and target and signature:
+                # Verify Ed25519 signature before adding trust (HIGH-C fix)
+                try:
+                    from nacl.signing import VerifyKey
+                    from nacl.exceptions import BadSignatureError
+                    verify_key = VerifyKey(bytes.fromhex(signer))
+                    msg_bytes = f"{signer}:{target}".encode()
+                    verify_key.verify(msg_bytes, bytes.fromhex(signature))
+                    self.web_of_trust.add_trust(signer, target)
+                except (BadSignatureError, ValueError, ImportError) as e:
+                    logger.warning(f"Rejected invalid trust_sign gossip: {e}")
 
         # Forward to other WS clients (with 1-hop limit to avoid storms)
         await self._broadcast_ws(message)
